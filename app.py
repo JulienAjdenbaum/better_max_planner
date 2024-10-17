@@ -38,7 +38,9 @@ dates = st.date_input(
 if st.button("Trouver mon voyage idéal "):
     # Run your trip query function here
     df = utils.find_optimal_trips(station, dates)
+    df = df[df["temps_sur_place"] > 0]
     df['temps_aller'] = pd.to_datetime(df['Heure_arrivee'], format='%H:%M')-pd.to_datetime(df['Heure_depart'], format='%H:%M')
+
     # df['Heure_arrivee'] = pd.to_datetime(df['Heure_arrivee'], format='%H:%M')
     # Iterate over each unique destination
     # Iterate over each unique destination
