@@ -3,4 +3,4 @@ numpy
 pandas
 sqlalchemy
 streamlit
-apscheduler
+pydeck

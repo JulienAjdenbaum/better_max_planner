@@ -3,6 +3,7 @@ import utils
 import datetime
 import pandas as pd
 import random
+import pydeck as pdk
 
 random.seed(0)
 
@@ -37,7 +38,9 @@ with tab1:
 
     if st.button("Trouver mon voyage idéal ", key=random.randint(0, int(1e6))):
         # Run your trip query function here
+        print(station, dates)
         df = utils.find_optimal_trips(station, dates)
+        print(df)
         df = df[df["temps_sur_place"] > 0]
         df['temps_aller'] = pd.to_datetime(df['heure_arrivee'], format='%H:%M') - pd.to_datetime(df['heure_depart'],
                                                                                                  format='%H:%M')

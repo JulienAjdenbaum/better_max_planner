@@ -2,15 +2,16 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 import requests
 from io import StringIO
-from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime, timedelta
+from datetime import datetime
 import numpy as np
 import time
+
 # pd.set_option('display.max_rows', 500)
 # pd.set_option('display.max_columns', 500)
 # from app import destination
 
 engine = create_engine('sqlite:///tgvmax.db')
+df_stations = pd.read_csv("data/gares-de-voyageurs.csv")
 
 def format_duration(td):
     total_minutes = int(td.total_seconds() // 60)
@@ -30,13 +31,6 @@ def format_duration(td):
         else:
             return f"{hours} {heures_string} et {minutes} {minutes_string}"
 
-def scheduled_task():
-    print("Did task")
-
-def test_app_scheduler():
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(scheduled_task, 'interval', seconds=1)
-    scheduler.start()
 
 def update_db(engine):
     # URL to download the CSV file
@@ -66,6 +60,11 @@ def run_query(query, params=None, engine=engine, as_list=False):
             return [row[0] for row in result.fetchall()]
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
+def get_station_location(iata):
+    if iata[:2] == "FR":
+        return df_stations[df_stations["Trigramme"]==iata[2:]]
+    else:
+        return -1
 
 def get_all_towns():
     """Return all distinct towns available in the dataset."""
@@ -98,8 +97,11 @@ def find_optimal_trips(station, dates):
         "ville": station,
         'n_jours': n_jours
     }
-
-    return run_query(query, params=params)
+    results = run_query(query, params=params)
+    for ville, group in results.groupby("destination"):
+        print(ville)
+    # print(results)
+    # return
 
 
 def preview_query(query, params):
@@ -242,15 +244,13 @@ def get_trip_connections(dates, origins, destinations):
             train_dic['train_list'].append(list(run_query(query, params=params).values[0]))
         train_dic['route_name'] = route['route_description']
         # print(route.keys)
-        train_dic['duration'] = datetime.strptime(route['last_leg_arrival'], '%H:%M') - datetime.strptime(route['first_leg_departure'], '%H:%M')
+        train_dic['duration'] = datetime.strptime(route['last_leg_arrival'], '%H:%M') - datetime.strptime(
+            route['first_leg_departure'], '%H:%M')
         result_list.append(train_dic)
 
     idx = np.argsort([result["duration"] for result in result_list])
     result_list = [result_list[i] for i in idx]
     return result_list
-
-
-
 
 
 if __name__ == "__main__":
@@ -266,8 +266,13 @@ if __name__ == "__main__":
     # destinations = ["AVIGNON TGV", "AVIGNON CENTRE", "ORANGE", "MONTELIMAR GARE SNCF", "VALENCE TGV RHONE-ALPES SUD",
     #                 "VALENCE VILLE"]
     #
-    dates = ("2024-11-14", "2024-11-14")
-    origins = ['PARIS (intramuros)']
-    destinations = ['AVIGNON TGV']
+    # dates = ("2024-11-14", "2024-11-14")
+    # origins = ['PARIS (intramuros)']
+    # destinations = ['AVIGNON TGV']
+    #
+    # print(get_trip_connections(dates, origins, destinations))
 
-    print(get_trip_connections(dates, origins, destinations))
+    # dates = (datetime.strptime("2024-11-14", "%Y-%m-%d").date(), datetime.strptime("2024-11-14", "%Y-%m-%d").date())
+    # origine = "PARIS (intramuros)"
+    # find_optimal_trips(origine, dates)
+    print(get_station_location("FRFSI"))

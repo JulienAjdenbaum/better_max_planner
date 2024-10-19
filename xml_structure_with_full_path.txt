@@ -1,0 +1,416 @@
+Element: PublicationDelivery (Full Path: PublicationDelivery)
+  Attribute: version
+  Attribute: {http://www.w3.org/2001/XMLSchema-instance}schemaLocation
+  Element: PublicationTimestamp (Full Path: PublicationDelivery/PublicationTimestamp)
+  Element: ParticipantRef (Full Path: PublicationDelivery/ParticipantRef)
+  Element: Description (Full Path: PublicationDelivery/Description)
+    Attribute: lang
+  Element: dataObjects (Full Path: PublicationDelivery/dataObjects)
+    Element: CompositeFrame (Full Path: PublicationDelivery/dataObjects/CompositeFrame)
+      Attribute: id
+      Attribute: version
+      Element: ValidBetween (Full Path: PublicationDelivery/dataObjects/CompositeFrame/ValidBetween)
+        Element: FromDate (Full Path: PublicationDelivery/dataObjects/CompositeFrame/ValidBetween/FromDate)
+        Element: ToDate (Full Path: PublicationDelivery/dataObjects/CompositeFrame/ValidBetween/ToDate)
+      Element: FrameDefaults (Full Path: PublicationDelivery/dataObjects/CompositeFrame/FrameDefaults)
+        Element: DefaultLocale (Full Path: PublicationDelivery/dataObjects/CompositeFrame/FrameDefaults/DefaultLocale)
+          Element: TimeZoneOffset (Full Path: PublicationDelivery/dataObjects/CompositeFrame/FrameDefaults/DefaultLocale/TimeZoneOffset)
+          Element: SummerTimeZoneOffset (Full Path: PublicationDelivery/dataObjects/CompositeFrame/FrameDefaults/DefaultLocale/SummerTimeZoneOffset)
+          Element: DefaultLanguage (Full Path: PublicationDelivery/dataObjects/CompositeFrame/FrameDefaults/DefaultLocale/DefaultLanguage)
+      Element: frames (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames)
+        Element: GeneralFrame (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame)
+          Attribute: id
+          Attribute: version
+          Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame/Name)
+          Element: members (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame/members)
+            Element: JourneyPart (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame/members/JourneyPart)
+              Attribute: id
+              Attribute: version
+              Element: ParentJourneyRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame/members/JourneyPart/ParentJourneyRef)
+                Attribute: ref
+                Attribute: version
+              Element: MainPartRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame/members/JourneyPart/MainPartRef)
+                Attribute: ref
+                Attribute: version
+              Element: TrainNumberRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame/members/JourneyPart/TrainNumberRef)
+                Attribute: ref
+                Attribute: version
+              Element: FromStopPointRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame/members/JourneyPart/FromStopPointRef)
+                Attribute: ref
+                Attribute: version
+              Element: ToStopPointRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame/members/JourneyPart/ToStopPointRef)
+                Attribute: ref
+                Attribute: version
+              Element: StartTime (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame/members/JourneyPart/StartTime)
+              Element: EndTime (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame/members/JourneyPart/EndTime)
+              Element: EndTimeDayOffset (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame/members/JourneyPart/EndTimeDayOffset)
+              Element: JourneyPartCoupleRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame/members/JourneyPart/JourneyPartCoupleRef)
+                Attribute: ref
+                Attribute: version
+              Element: StartTimeDayOffset (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/GeneralFrame/members/JourneyPart/StartTimeDayOffset)
+        Element: ResourceFrame (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame)
+          Attribute: id
+          Attribute: version
+          Element: typesOfValue (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/typesOfValue)
+            Element: ValueSet (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/typesOfValue/ValueSet)
+              Attribute: id
+              Attribute: version
+              Attribute: nameOfClass
+              Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/typesOfValue/ValueSet/Name)
+              Element: values (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/typesOfValue/ValueSet/values)
+                Element: TypeOfProductCategory (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/typesOfValue/ValueSet/values/TypeOfProductCategory)
+                  Attribute: id
+                  Attribute: version
+                  Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/typesOfValue/ValueSet/values/TypeOfProductCategory/Name)
+                    Attribute: lang
+                  Element: ShortName (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/typesOfValue/ValueSet/values/TypeOfProductCategory/ShortName)
+                    Attribute: lang
+                Element: TypeOfPlace (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/typesOfValue/ValueSet/values/TypeOfPlace)
+                  Attribute: id
+                  Attribute: version
+                  Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/typesOfValue/ValueSet/values/TypeOfPlace/Name)
+                Element: TypeOfLine (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/typesOfValue/ValueSet/values/TypeOfLine)
+                  Attribute: id
+                  Attribute: version
+                  Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/typesOfValue/ValueSet/values/TypeOfLine/Name)
+          Element: organisations (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/organisations)
+            Element: Operator (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/organisations/Operator)
+              Attribute: id
+              Attribute: version
+              Element: PublicCode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/organisations/Operator/PublicCode)
+              Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/organisations/Operator/Name)
+              Element: OrganisationType (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ResourceFrame/organisations/Operator/OrganisationType)
+        Element: SiteFrame (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame)
+          Attribute: id
+          Attribute: version
+          Element: topographicPlaces (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/topographicPlaces)
+            Element: TopographicPlace (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/topographicPlaces/TopographicPlace)
+              Attribute: id
+              Attribute: version
+              Element: PrivateCode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/topographicPlaces/TopographicPlace/PrivateCode)
+              Element: Descriptor (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/topographicPlaces/TopographicPlace/Descriptor)
+                Attribute: version
+                Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/topographicPlaces/TopographicPlace/Descriptor/Name)
+                  Attribute: lang
+              Element: TopographicPlaceType (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/topographicPlaces/TopographicPlace/TopographicPlaceType)
+              Element: CountryRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/topographicPlaces/TopographicPlace/CountryRef)
+              Element: ParentTopographicPlaceRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/topographicPlaces/TopographicPlace/ParentTopographicPlaceRef)
+                Attribute: ref
+                Attribute: version
+          Element: stopPlaces (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces)
+            Element: StopPlace (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace)
+              Attribute: id
+              Attribute: created
+              Attribute: changed
+              Attribute: modification
+              Attribute: version
+              Element: ValidBetween (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/ValidBetween)
+                Element: FromDate (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/ValidBetween/FromDate)
+                Element: ToDate (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/ValidBetween/ToDate)
+              Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/Name)
+                Attribute: lang
+              Element: ShortName (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/ShortName)
+                Attribute: lang
+              Element: PrivateCode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/PrivateCode)
+              Element: Centroid (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/Centroid)
+                Element: Location (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/Centroid/Location)
+                  Attribute: srsName
+                  Element: Longitude (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/Centroid/Location/Longitude)
+                  Element: Latitude (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/Centroid/Location/Latitude)
+              Element: placeTypes (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/placeTypes)
+                Element: TypeOfPlaceRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/placeTypes/TypeOfPlaceRef)
+                  Attribute: ref
+                  Attribute: version
+              Element: PostalAddress (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/PostalAddress)
+                Attribute: id
+                Attribute: version
+                Element: CountryRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/PostalAddress/CountryRef)
+                Element: HouseNumber (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/PostalAddress/HouseNumber)
+                Element: Street (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/PostalAddress/Street)
+                Element: Town (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/PostalAddress/Town)
+                Element: PostCode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/PostalAddress/PostCode)
+                Element: PostalRegion (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/PostalAddress/PostalRegion)
+              Element: alternativeNames (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/alternativeNames)
+                Element: AlternativeName (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/alternativeNames/AlternativeName)
+                  Element: Lang (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/alternativeNames/AlternativeName/Lang)
+                  Element: NameType (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/alternativeNames/AlternativeName/NameType)
+                  Element: TypeOfName (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/alternativeNames/AlternativeName/TypeOfName)
+                  Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/alternativeNames/AlternativeName/Name)
+              Element: TopographicPlaceRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/TopographicPlaceRef)
+                Attribute: ref
+                Attribute: version
+              Element: Locale (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/Locale)
+                Element: TimeZoneOffset (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/Locale/TimeZoneOffset)
+                Element: TimeZone (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/Locale/TimeZone)
+                Element: SummerTimeZoneOffset (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/Locale/SummerTimeZoneOffset)
+                Element: DefaultLanguage (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/Locale/DefaultLanguage)
+              Element: TransportMode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/TransportMode)
+              Element: OtherTransportModes (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/OtherTransportModes)
+              Element: StopPlaceType (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/SiteFrame/stopPlaces/StopPlace/StopPlaceType)
+        Element: ServiceFrame (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame)
+          Attribute: id
+          Attribute: version
+          Element: additionalNetworks (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/additionalNetworks)
+            Element: Network (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/additionalNetworks/Network)
+              Attribute: id
+              Attribute: version
+              Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/additionalNetworks/Network/Name)
+              Element: groupsOfLines (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/additionalNetworks/Network/groupsOfLines)
+                Element: GroupOfLines (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/additionalNetworks/Network/groupsOfLines/GroupOfLines)
+                  Attribute: id
+                  Attribute: version
+                  Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/additionalNetworks/Network/groupsOfLines/GroupOfLines/Name)
+                  Element: members (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/additionalNetworks/Network/groupsOfLines/GroupOfLines/members)
+                    Element: LineRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/additionalNetworks/Network/groupsOfLines/GroupOfLines/members/LineRef)
+                      Attribute: ref
+          Element: routePoints (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routePoints)
+            Element: RoutePoint (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routePoints/RoutePoint)
+              Attribute: id
+              Attribute: version
+              Element: Location (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routePoints/RoutePoint/Location)
+                Attribute: srsName
+                Element: Longitude (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routePoints/RoutePoint/Location/Longitude)
+                Element: Latitude (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routePoints/RoutePoint/Location/Latitude)
+          Element: routeLinks (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routeLinks)
+            Element: RouteLink (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routeLinks/RouteLink)
+              Attribute: id
+              Attribute: version
+              Element: Distance (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routeLinks/RouteLink/Distance)
+              Element: FromPointRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routeLinks/RouteLink/FromPointRef)
+                Attribute: ref
+              Element: ToPointRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routeLinks/RouteLink/ToPointRef)
+                Attribute: ref
+          Element: routes (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routes)
+            Element: Route (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routes/Route)
+              Attribute: id
+              Attribute: version
+              Element: Distance (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routes/Route/Distance)
+              Element: LineRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routes/Route/LineRef)
+                Attribute: ref
+              Element: DirectionType (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routes/Route/DirectionType)
+              Element: pointsInSequence (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routes/Route/pointsInSequence)
+                Element: PointOnRoute (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routes/Route/pointsInSequence/PointOnRoute)
+                  Attribute: id
+                  Attribute: version
+                  Attribute: order
+                  Element: RoutePointRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/routes/Route/pointsInSequence/PointOnRoute/RoutePointRef)
+                    Attribute: ref
+          Element: lines (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines)
+            Element: Line (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line)
+              Attribute: id
+              Attribute: version
+              Attribute: responsibilitySetRef
+              Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/Name)
+              Element: Description (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/Description)
+              Element: TransportMode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/TransportMode)
+              Element: TransportSubmode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/TransportSubmode)
+                Element: CoachSubmode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/TransportSubmode/CoachSubmode)
+              Element: PublicCode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/PublicCode)
+              Element: OperatorRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/OperatorRef)
+                Attribute: ref
+              Element: routes (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/routes)
+                Element: RouteRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/routes/RouteRef)
+                  Attribute: ref
+                Element: RailSubmode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/TransportSubmode/RailSubmode)
+              Element: TypeOfLineRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/TypeOfLineRef)
+                Attribute: ref
+              Element: Presentation (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/Presentation)
+                Element: Colour (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/Presentation/Colour)
+                Element: TextColour (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/lines/Line/Presentation/TextColour)
+          Element: destinationDisplays (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/destinationDisplays)
+            Element: DestinationDisplay (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/destinationDisplays/DestinationDisplay)
+              Attribute: id
+              Attribute: version
+              Element: SideText (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/destinationDisplays/DestinationDisplay/SideText)
+              Element: FrontText (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/destinationDisplays/DestinationDisplay/FrontText)
+          Element: scheduledStopPoints (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/scheduledStopPoints)
+            Element: ScheduledStopPoint (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/scheduledStopPoints/ScheduledStopPoint)
+              Attribute: id
+              Attribute: version
+              Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/scheduledStopPoints/ScheduledStopPoint/Name)
+                Attribute: lang
+              Element: Location (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/scheduledStopPoints/ScheduledStopPoint/Location)
+                Attribute: srsName
+                Element: Longitude (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/scheduledStopPoints/ScheduledStopPoint/Location/Longitude)
+                Element: Latitude (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/scheduledStopPoints/ScheduledStopPoint/Location/Latitude)
+              Element: PublicCode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/scheduledStopPoints/ScheduledStopPoint/PublicCode)
+          Element: connections (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections)
+            Element: Connection (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/Connection)
+              Attribute: id
+              Attribute: version
+              Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/Connection/Name)
+              Element: WalkTransferDuration (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/Connection/WalkTransferDuration)
+                Element: DefaultDuration (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/Connection/WalkTransferDuration/DefaultDuration)
+              Element: BothWays (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/Connection/BothWays)
+              Element: From (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/Connection/From)
+                Element: ScheduledStopPointRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/Connection/From/ScheduledStopPointRef)
+                  Attribute: ref
+              Element: To (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/Connection/To)
+                Element: ScheduledStopPointRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/Connection/To/ScheduledStopPointRef)
+                  Attribute: ref
+                Element: TransportMode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/Connection/From/TransportMode)
+                Element: TransportMode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/Connection/To/TransportMode)
+            Element: DefaultConnection (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/DefaultConnection)
+              Attribute: id
+              Attribute: version
+              Element: WalkTransferDuration (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/DefaultConnection/WalkTransferDuration)
+                Element: DefaultDuration (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/DefaultConnection/WalkTransferDuration/DefaultDuration)
+              Element: BothWays (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/DefaultConnection/BothWays)
+              Element: From (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/DefaultConnection/From)
+                Element: TransportMode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/DefaultConnection/From/TransportMode)
+              Element: To (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/DefaultConnection/To)
+                Element: TransportMode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/connections/DefaultConnection/To/TransportMode)
+          Element: stopAssignments (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/stopAssignments)
+            Element: PassengerStopAssignment (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/stopAssignments/PassengerStopAssignment)
+              Attribute: id
+              Attribute: version
+              Attribute: order
+              Element: ScheduledStopPointRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/stopAssignments/PassengerStopAssignment/ScheduledStopPointRef)
+                Attribute: ref
+                Attribute: version
+              Element: StopPlaceRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/stopAssignments/PassengerStopAssignment/StopPlaceRef)
+                Attribute: ref
+                Attribute: version
+          Element: journeyPatterns (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/journeyPatterns)
+            Element: ServiceJourneyPattern (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/journeyPatterns/ServiceJourneyPattern)
+              Attribute: id
+              Attribute: version
+              Element: Distance (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/journeyPatterns/ServiceJourneyPattern/Distance)
+              Element: DestinationDisplayRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/journeyPatterns/ServiceJourneyPattern/DestinationDisplayRef)
+                Attribute: ref
+              Element: pointsInSequence (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/journeyPatterns/ServiceJourneyPattern/pointsInSequence)
+                Element: StopPointInJourneyPattern (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/journeyPatterns/ServiceJourneyPattern/pointsInSequence/StopPointInJourneyPattern)
+                  Attribute: id
+                  Attribute: version
+                  Attribute: order
+                  Element: ScheduledStopPointRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/journeyPatterns/ServiceJourneyPattern/pointsInSequence/StopPointInJourneyPattern/ScheduledStopPointRef)
+                    Attribute: ref
+              Element: ServiceJourneyPatternType (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceFrame/journeyPatterns/ServiceJourneyPattern/ServiceJourneyPatternType)
+        Element: ServiceCalendarFrame (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceCalendarFrame)
+          Attribute: id
+          Attribute: version
+          Element: dayTypes (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceCalendarFrame/dayTypes)
+            Element: DayType (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceCalendarFrame/dayTypes/DayType)
+              Attribute: id
+              Attribute: version
+          Element: operatingPeriods (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceCalendarFrame/operatingPeriods)
+            Element: UicOperatingPeriod (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceCalendarFrame/operatingPeriods/UicOperatingPeriod)
+              Attribute: id
+              Attribute: version
+              Element: FromDate (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceCalendarFrame/operatingPeriods/UicOperatingPeriod/FromDate)
+              Element: ToDate (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceCalendarFrame/operatingPeriods/UicOperatingPeriod/ToDate)
+              Element: ValidDayBits (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceCalendarFrame/operatingPeriods/UicOperatingPeriod/ValidDayBits)
+          Element: dayTypeAssignments (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceCalendarFrame/dayTypeAssignments)
+            Element: DayTypeAssignment (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceCalendarFrame/dayTypeAssignments/DayTypeAssignment)
+              Attribute: id
+              Attribute: version
+              Attribute: order
+              Element: UicOperatingPeriodRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceCalendarFrame/dayTypeAssignments/DayTypeAssignment/UicOperatingPeriodRef)
+                Attribute: ref
+              Element: DayTypeRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/ServiceCalendarFrame/dayTypeAssignments/DayTypeAssignment/DayTypeRef)
+                Attribute: ref
+        Element: TimetableFrame (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame)
+          Attribute: id
+          Attribute: version
+          Element: vehicleJourneys (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys)
+            Element: ServiceJourney (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney)
+              Attribute: id
+              Attribute: responsibilitySetRef
+              Attribute: dataSourceRef
+              Attribute: changed
+              Attribute: version
+              Attribute: status
+              Element: ValidBetween (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/ValidBetween)
+                Element: FromDate (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/ValidBetween/FromDate)
+                Element: ToDate (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/ValidBetween/ToDate)
+              Element: BrandingRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/BrandingRef)
+                Attribute: ref
+              Element: Distance (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/Distance)
+              Element: TransportMode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/TransportMode)
+              Element: TransportSubmode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/TransportSubmode)
+                Element: RailSubmode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/TransportSubmode/RailSubmode)
+              Element: ServiceAlteration (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/ServiceAlteration)
+              Element: DepartureTime (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/DepartureTime)
+              Element: dayTypes (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/dayTypes)
+                Element: DayTypeRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/dayTypes/DayTypeRef)
+                  Attribute: ref
+              Element: JourneyPatternRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/JourneyPatternRef)
+                Attribute: ref
+              Element: OperatorRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/OperatorRef)
+                Attribute: ref
+              Element: LineRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/LineRef)
+                Attribute: ref
+                Attribute: version
+              Element: trainNumbers (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/trainNumbers)
+                Element: TrainNumberRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/trainNumbers/TrainNumberRef)
+                  Attribute: ref
+                  Attribute: version
+              Element: passingTimes (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/passingTimes)
+                Element: TimetabledPassingTime (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/passingTimes/TimetabledPassingTime)
+                  Element: PointInJourneyPatternRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/passingTimes/TimetabledPassingTime/PointInJourneyPatternRef)
+                    Attribute: ref
+                  Element: DepartureTime (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/passingTimes/TimetabledPassingTime/DepartureTime)
+                  Element: ArrivalTime (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/passingTimes/TimetabledPassingTime/ArrivalTime)
+              Element: facilities (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/facilities)
+                Element: ServiceFacilitySet (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/facilities/ServiceFacilitySet)
+                  Attribute: id
+                  Attribute: version
+                  Element: FareClasses (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/facilities/ServiceFacilitySet/FareClasses)
+                  Element: AccommodationFacilityList (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/facilities/ServiceFacilitySet/AccommodationFacilityList)
+                  Element: LuggageCarriageFacilityList (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/facilities/ServiceFacilitySet/LuggageCarriageFacilityList)
+                  Element: ServiceReservationFacilityList (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/facilities/ServiceFacilitySet/ServiceReservationFacilityList)
+                  Element: CateringFacilityList (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/facilities/ServiceFacilitySet/CateringFacilityList)
+                  Element: FamilyFacilityList (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/facilities/ServiceFacilitySet/FamilyFacilityList)
+                  Element: PassengerCommsFacilityList (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/facilities/ServiceFacilitySet/PassengerCommsFacilityList)
+                  Element: AssistanceFacilityList (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/facilities/ServiceFacilitySet/AssistanceFacilityList)
+                  Element: ArrivalDayOffset (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/passingTimes/TimetabledPassingTime/ArrivalDayOffset)
+                  Element: DepartureDayOffset (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/passingTimes/TimetabledPassingTime/DepartureDayOffset)
+                  Element: GenderLimitation (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/vehicleJourneys/ServiceJourney/facilities/ServiceFacilitySet/GenderLimitation)
+          Element: trainNumbers (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/trainNumbers)
+            Element: TrainNumber (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/trainNumbers/TrainNumber)
+              Attribute: id
+              Attribute: version
+              Attribute: responsibilitySetRef
+              Element: ForAdvertisement (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/trainNumbers/TrainNumber/ForAdvertisement)
+          Element: journeyPartCouples (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/journeyPartCouples)
+            Element: JourneyPartCouple (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/journeyPartCouples/JourneyPartCouple)
+              Attribute: id
+              Attribute: order
+              Attribute: version
+              Element: StartTime (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/journeyPartCouples/JourneyPartCouple/StartTime)
+              Element: StartTimeDayOffset (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/journeyPartCouples/JourneyPartCouple/StartTimeDayOffset)
+              Element: EndTime (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/journeyPartCouples/JourneyPartCouple/EndTime)
+              Element: EndTimeDayOffset (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/journeyPartCouples/JourneyPartCouple/EndTimeDayOffset)
+              Element: FromStopPointRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/journeyPartCouples/JourneyPartCouple/FromStopPointRef)
+                Attribute: ref
+                Attribute: version
+              Element: ToStopPointRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/journeyPartCouples/JourneyPartCouple/ToStopPointRef)
+                Attribute: ref
+                Attribute: version
+              Element: MainPartRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/journeyPartCouples/JourneyPartCouple/MainPartRef)
+                Attribute: ref
+                Attribute: version
+              Element: journeyParts (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/journeyPartCouples/JourneyPartCouple/journeyParts)
+                Element: JourneyPartRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/journeyPartCouples/JourneyPartCouple/journeyParts/JourneyPartRef)
+                  Attribute: ref
+                  Attribute: version
+              Element: TrainNumberRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/journeyPartCouples/JourneyPartCouple/TrainNumberRef)
+                Attribute: ref
+                Attribute: version
+          Element: coupledJourneys (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/coupledJourneys)
+            Element: CoupledJourney (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/coupledJourneys/CoupledJourney)
+              Attribute: id
+              Attribute: version
+              Element: journeys (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/coupledJourneys/CoupledJourney/journeys)
+                Element: VehicleJourneyRef (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/coupledJourneys/CoupledJourney/journeys/VehicleJourneyRef)
+                  Attribute: ref
+                  Attribute: version
+          Element: typesOfService (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/typesOfService)
+            Element: TypeOfService (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/typesOfService/TypeOfService)
+              Attribute: id
+              Attribute: version
+              Element: Name (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/typesOfService/TypeOfService/Name)
+                Attribute: lang
+              Element: ShortName (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/typesOfService/TypeOfService/ShortName)
+                Attribute: lang
+              Element: PrivateCode (Full Path: PublicationDelivery/dataObjects/CompositeFrame/frames/TimetableFrame/typesOfService/TypeOfService/PrivateCode)
