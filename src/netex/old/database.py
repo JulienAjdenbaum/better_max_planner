@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from models import Base
 import os
 
-DATABASE_PATH = '/home/julien/Documents/pythonProjects/data/netex.db'
+DATABASE_PATH = '/data/netex.db'
 DATABASE_URL = f'sqlite:///{DATABASE_PATH}'
 
 def get_engine():
