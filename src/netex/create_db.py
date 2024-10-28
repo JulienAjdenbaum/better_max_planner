@@ -2,10 +2,11 @@ import os
 import xml.etree.ElementTree as ET
 import logging
 import json  # To save the structure in a reusable format
-from sqlalchemy import create_engine, Column, Integer, Float, String, Index
+from sqlalchemy import create_engine, Column, Integer, Float, String, Index, BigInteger
 from sqlalchemy.orm import sessionmaker, declarative_base
 import re
 from tqdm import tqdm  # Import tqdm for progress bars
+import random
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +18,7 @@ models = {}  # To store dynamically created models
 element_structure = {}  # To store element structures
 parent_child_structure = {}  # To track parent-child relationships
 
-BATCH_SIZE = 500  # Define the batch size for bulk insertions
+BATCH_SIZE = 2  # Define the batch size for bulk insertions
 
 def determine_column_type(value):
     """Determine SQLAlchemy column type based on the value."""
@@ -42,7 +43,7 @@ def create_model(tag, structure):
     if 'id' in structure['attributes'] and structure['attributes']['id'] == String:
         attrs['id'] = Column(String, primary_key=True)  # Keep as String if explicitly needed
     else:
-        attrs['id'] = Column(Integer, primary_key=True, autoincrement=True)  # Enable auto-increment for Integer IDs
+        attrs['id'] = Column(BigInteger, primary_key=True, autoincrement=True)  # Enable auto-increment for Integer IDs
 
     # Add other attributes and child elements as columns
     for attr, col_type in {**structure['attributes'], **structure['columns']}.items():
@@ -68,10 +69,10 @@ def analyze_element_structure(element, ns_map, parent_tag=None):
     """Recursively analyze XML structure to determine attributes, text content, and child elements."""
     tag = element.tag.split('}')[-1]  # Remove namespace if present
     if parent_tag:
-        if parent_tag not in parent_child_structure:
-            parent_child_structure[parent_tag + "_table"] = []
-        if tag not in parent_child_structure[parent_tag + "_table"]:
-            parent_child_structure[parent_tag + "_table"].append(tag + "_table")
+        if "_" + parent_tag.lower() not in parent_child_structure:
+            parent_child_structure["_" + parent_tag.lower()] = []
+        if "_" + tag.lower() not in parent_child_structure["_" + parent_tag.lower()]:
+            parent_child_structure["_" + parent_tag.lower()].append("_" + tag.lower())
 
     if tag not in element_structure:
         element_structure[tag] = {'attributes': {}, 'columns': {}, 'tables': set()}
@@ -113,8 +114,10 @@ def process_element(element, session, ns_map, parent_instance=None, progress=Non
     data = {attr: element.attrib.get(attr) for attr in structure['attributes']}
 
     # Handle the case where 'id' is missing and auto-generate it for Integer fields
-    if 'id' not in data and 'id' in structure['attributes'] and isinstance(ModelClass.id.type, Integer):
-        data['id'] = None  # Let SQLAlchemy auto-generate the ID
+    # print(structure['attributes'])
+    # if 'id' not in data and 'id' in structure['attributes'] and isinstance(ModelClass.id.type, Integer):
+    if 'id' not in data:
+        data['id'] = random.getrandbits(64)-2**63
 
     data.update({col: element.find(f'./netex:{col}', ns_map).text.strip() if element.find(f'./netex:{col}', ns_map) is not None else None
                  for col in structure['columns'] if col != 'text_content'})
@@ -124,7 +127,7 @@ def process_element(element, session, ns_map, parent_instance=None, progress=Non
         data['text_content'] = element.text.strip() if element.text else None
 
     if parent_instance:
-        data['parent_id'] = getattr(parent_instance, 'id')
+        data['parent_id'] = parent_instance
 
     instance = ModelClass(**data)
 
@@ -132,6 +135,7 @@ def process_element(element, session, ns_map, parent_instance=None, progress=Non
     batch.append(instance)
 
     if len(batch) >= BATCH_SIZE:
+        progress.update(len(batch))
         session.bulk_save_objects(batch)
         session.flush()
         batch.clear()
@@ -140,20 +144,23 @@ def process_element(element, session, ns_map, parent_instance=None, progress=Non
     for table_tag in structure['tables']:
         children = element.findall(f'./netex:{table_tag}', ns_map)
 
+        if len(children) > 1:
+            children = tqdm(children, desc=f"Processing {table_tag}", leave=False)
+        for child in children:
+            batch = process_element(child, session, ns_map, parent_instance=data['id'], batch=batch,
+                                    progress=progress)
+        # else:
+        #     for child in children:
+        #         batch = process_element(child, session, ns_map, parent_instance=data['id'], batch=batch,
+        #                                 progress=progress)
         # Initialize a tqdm progress bar for child elements
-        for child in tqdm(children, desc=f"Processing {table_tag}", leave=False):
-            process_element(child, session, ns_map, parent_instance=instance, batch=batch)
+
 
     # Update the global progress bar
     if progress is not None:
         progress.update(1)
 
-
-def save_parent_child_structure(structure_file):
-    """Save the parent-child structure to a JSON file."""
-    with open(structure_file, 'w') as f:
-        json.dump(parent_child_structure, f, indent=4)
-    logging.info(f"Parent-child structure saved to {structure_file}")
+    return batch
 
 
 def process_xml_files(directory, db_path, structure_file):
@@ -187,7 +194,7 @@ def process_xml_files(directory, db_path, structure_file):
             logger.error(f"Failed to analyze {xml_file}: {e}")
 
     # Save the structure to the structure file
-    save_parent_child_structure(structure_file)
+    # save_parent_child_structure(structure_file)
 
     # Create models and tables
     for tag, structure in element_structure.items():
@@ -212,8 +219,8 @@ def process_xml_files(directory, db_path, structure_file):
 
             # Batch insertions
             batch = []
-            with tqdm(total=total_elements, desc="Global Progress") as progress:
-                process_element(root, session, ns_map, progress=progress, batch=batch)
+            with tqdm(total=total_elements, desc="Global Progress", leave=False) as progress:
+                batch = process_element(root, session, ns_map, progress=progress, batch=batch)
 
             # Commit any remaining items in the batch
             if batch:
@@ -227,12 +234,12 @@ def process_xml_files(directory, db_path, structure_file):
             session.rollback()
 
     logger.info("All XML files have been processed.")
-
+    return parent_child_structure
 
 if __name__ == "__main__":
-    xml_directory = "/home/julien/Documents/pythonProjects/data/netex_xml"
-    db_path = "/data/formated.db"
-    structure_file = "/data/structure.json"
+    xml_directory = "/home/julien/Documents/pythonProjects/data/test_xmls"
+    db_path = "/home/julien/Documents/pythonProjects/data/formated.db"
+    structure_file = "/home/julien/Documents/pythonProjects/data/structure.json"
 
     logger.info(f"Starting XML processing for directory: {xml_directory}")
     process_xml_files(xml_directory, db_path, structure_file)
