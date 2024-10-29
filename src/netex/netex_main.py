@@ -1,4 +1,4 @@
-import create_db, check_completeness, clean_tables
+import create_db, check_completeness, clean_tables, create_links
 import logging
 import json
 import os
@@ -28,17 +28,18 @@ def load_structure(structure_file):
 
 
 if __name__ == '__main__':
-    xml_directory = "/home/julien/Documents/pythonProjects/data/netex_xml"
-    db_path = "/home/julien/Documents/pythonProjects/data/formated.db"
+    # xml_directory = "/home/julien/Documents/pythonProjects/data/netex_xml"
+    xml_directory = "/home/julien/Documents/pythonProjects/data/test_xmls"
+    db_path = "/home/julien/Documents/pythonProjects/data/formated_cp.db"
     structure_file = "/home/julien/Documents/pythonProjects/data/structure.json"
 
     logger.info(f"Starting database cration for directory: {xml_directory}")
-    structure = create_db.process_xml_files(xml_directory, db_path, structure_file)
+    structure, engine = create_db.process_xml_files(xml_directory, db_path, structure_file)
     logger.info("Databse creation completed.")
 
     logger.info("Starting check that all elements are present")
     elements_dict = check_completeness.get_element_dict(xml_directory)
-    database_dict = check_completeness.get_database_dict(db_path)
+    database_dict = check_completeness.get_database_dict(engine)
     is_complete, message = check_completeness.check_if_equal(elements_dict, database_dict)
 
     if is_complete:
@@ -46,11 +47,15 @@ if __name__ == '__main__':
     else:
         raise ElementsMissing(message)
 
-    # if structure:
-    #     engine, session = clean_tables.setup_db(db_path)
-    #
-    #     logging.info("Starting postprocessing...")
-    #     structure = clean_tables.merge_tables(engine, structure)
-    #     logging.info("Postprocessing completed.")
-    #
+    if structure:
+        # engine, session = clean_tables.setup_db(db_path)
+
+        logging.info("Starting postprocessing...")
+        structure = clean_tables.merge_tables(engine, structure)
+        logging.info("Postprocessing completed.")
+
+    # create_links.process_structure(structure, engine)
+
     save_parent_child_structure(structure, structure_file)
+
+

@@ -27,9 +27,8 @@ def get_element_dict(file_dir):
     return names_dict
 
 
-def get_database_dict(db_path):
+def get_database_dict(engine):
     # Create a connection to the SQLite database
-    engine = create_engine(f'sqlite:///{db_path}')
     Session = sessionmaker(bind=engine)
     session = Session()
 

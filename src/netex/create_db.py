@@ -234,7 +234,7 @@ def process_xml_files(directory, db_path, structure_file):
             session.rollback()
 
     logger.info("All XML files have been processed.")
-    return parent_child_structure
+    return parent_child_structure, engine
 
 if __name__ == "__main__":
     xml_directory = "/home/julien/Documents/pythonProjects/data/test_xmls"

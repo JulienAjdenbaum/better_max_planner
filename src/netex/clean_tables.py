@@ -9,6 +9,7 @@ import time
 
 Base = declarative_base()
 
+
 def load_structure(structure_file):
     if os.path.exists(structure_file):
         with open(structure_file, 'r') as f:
@@ -16,6 +17,7 @@ def load_structure(structure_file):
     else:
         logging.error(f"Structure file {structure_file} not found.")
         return {}
+
 
 # Set up the database engine and session
 def setup_db(db_path):
@@ -163,6 +165,9 @@ def drop_table(table_name, engine):
 
 # Merge tables into their parents using structure.json
 def merge_tables(engine, structure):
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
     table_names = get_all_table_names(engine)
     dropped_tables = set()
 
@@ -216,7 +221,7 @@ def merge_tables(engine, structure):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    db_path = "/home/julien/Documents/pythonProjects/data/formated.db"
+    db_path = "/home/julien/Documents/pythonProjects/data/formated_cp.db"
     structure_file = "/home/julien/Documents/pythonProjects/data/structure.json"
 
     # Load parent-child relationships from structure.json
