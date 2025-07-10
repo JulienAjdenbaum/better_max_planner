@@ -491,6 +491,10 @@
             }
         }
     </style>
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Choices.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
 </head>
 <body>
     <div class="container">
@@ -499,45 +503,88 @@
             <p>Find the best day trips from Paris with optimal time at destination</p>
         </div>
 
-        <div class="controls">
-            <div class="form-group">
-                <label for="dateInput">Select Date:</label>
-                <div class="date-input-wrapper">
-                    <input type="date" id="dateInput" min="{{ dates[0].value }}" max="{{ dates[-1].value }}" value="{{ dates[0].value }}" weekday="1">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="stationSelect">Departure Station:</label>
-                <div class="searchable-select">
-                    <input type="text" id="stationSearch" placeholder="PARIS (intramuros) - Type to search destinations..." autocomplete="off">
-                    <div class="dropdown-options" id="stationOptions" style="display: none;">
-                        <div class="option" data-value="PARIS (intramuros)">PARIS (intramuros)</div>
-                        {% for destination in destinations %}
-                        <div class="option" data-value="{{ destination }}">{{ destination }}</div>
-                        {% endfor %}
-                    </div>
-                    <input type="hidden" id="stationSelect" value="PARIS (intramuros)">
-                </div>
-            </div>
-
-            <button class="btn" onclick="findDestinations()">Find Optimal Destinations</button>
+        <!-- Tab Navigation -->
+        <div style="display: flex; border-bottom: 2px solid #e9ecef; background: #f8f9fa;">
+            <button class="btn" id="tab1-btn" style="border-radius: 0; border-bottom: none; background: none; color: #333; box-shadow: none; font-weight: 600;" onclick="showTab(1)">Day trips</button>
+            <button class="btn" id="tab2-btn" style="border-radius: 0; border-bottom: none; background: none; color: #333; box-shadow: none; font-weight: 600;" onclick="showTab(2)">Route finder</button>
         </div>
 
-        <div class="results" id="results">
-            <div class="loading" id="loading" style="display: none;">
-                <p>🔍 Searching for optimal destinations...</p>
+        <!-- Tab 1: Day trips Search -->
+        <div id="tab1-content">
+            <div class="controls">
+                <div class="form-group">
+                    <label for="dayTripDateInput">Select Date:</label>
+                    <div class="date-input-wrapper">
+                        <input type="text" id="dayTripDateInput" placeholder="Select date" readonly>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="stationSelect">Departure Station:</label>
+                    <div class="searchable-select">
+                        <input type="text" id="stationSearch" placeholder="PARIS (intramuros) - Type to search destinations..." autocomplete="off">
+                        <div class="dropdown-options" id="stationOptions" style="display: none;">
+                            <div class="option" data-value="PARIS (intramuros)">PARIS (intramuros)</div>
+                            {% for destination in destinations %}
+                            <div class="option" data-value="{{ destination }}">{{ destination }}</div>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="stationSelect" value="PARIS (intramuros)">
+                    </div>
+                </div>
+                <button class="btn" onclick="findDestinations()">Find day trip destinations</button>
             </div>
-            
-            <div id="error" style="display: none;"></div>
-            
-            <div id="tripsContainer"></div>
+            <div class="results" id="results">
+                <div class="loading" id="loading" style="display: none;">
+                    <p>🔍 Searching for day trips...</p>
+                </div>
+                
+                <div id="error" style="display: none;"></div>
+                
+                <div id="tripsContainer"></div>
+            </div>
+        </div>
+
+        <!-- Tab 2: How to get to a destination -->
+        <div id="tab2-content" style="display: none;">
+            <div class="controls">
+                <div class="form-group">
+                    <label for="dateRangeInput">Date Range:</label>
+                    <div class="date-input-wrapper">
+                        <input type="text" id="dateRangeInput" placeholder="Select date range" readonly>
+                    </div>
+                </div>
+                <!-- Route finder tab: multi-select origins and destinations -->
+                <div class="form-group">
+                    <label for="originSelect">Origin(s):</label>
+                    <select id="originSelect" multiple>
+                        {% for destination in destinations %}
+                        <option value="{{ destination }}">{{ destination }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="destinationSelect">Destination(s):</label>
+                    <select id="destinationSelect" multiple>
+                        {% for destination in destinations %}
+                        <option value="{{ destination }}">{{ destination }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button class="btn" id="findConnectionsBtn" onclick="findConnections()">Find Connections</button>
+            </div>
+            <div class="results" id="connectionsResults">
+                <div class="loading" id="connectionsLoading" style="display: none;">
+                    <p>🔍 Searching for trip connections...</p>
+                </div>
+                <div id="connectionsError" style="display: none;"></div>
+                <div id="connectionsContainer"></div>
+            </div>
         </div>
     </div>
 
     <script>
         async function findDestinations() {
-            const dateInput = document.getElementById('dateInput');
+            const dateInput = document.getElementById('dayTripDateInput');
             const stationSelect = document.getElementById('stationSelect');
             const loading = document.getElementById('loading');
             const error = document.getElementById('error');
@@ -581,12 +628,12 @@
             const container = document.getElementById('tripsContainer');
             
             if (data.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">No optimal destinations found for the selected criteria.</p>';
+                container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">No day trips found for the selected criteria.</p>';
                 return;
             }
 
             let html = `
-                <h2 style="margin-bottom: 20px; color: #333;">Found ${data.length} optimal destinations</h2>
+                <h2 style="margin-bottom: 20px; color: #333;">Found ${data.length} day trips</h2>
                 <div class="destinations-grid">
             `;
 
@@ -664,116 +711,178 @@
             error.style.display = 'block';
         }
 
-        // Searchable dropdown functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('stationSearch');
-            const optionsContainer = document.getElementById('stationOptions');
-            const hiddenInput = document.getElementById('stationSelect');
-            const options = document.querySelectorAll('.option');
+        // Tab switching logic
+        function showTab(tabNum) {
+            document.getElementById('tab1-content').style.display = tabNum === 1 ? 'block' : 'none';
+            document.getElementById('tab2-content').style.display = tabNum === 2 ? 'block' : 'none';
+            document.getElementById('tab1-btn').style.background = tabNum === 1 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'none';
+            document.getElementById('tab1-btn').style.color = tabNum === 1 ? 'white' : '#333';
+            document.getElementById('tab2-btn').style.background = tabNum === 2 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'none';
+            document.getElementById('tab2-btn').style.color = tabNum === 2 ? 'white' : '#333';
+        }
+        // Default to tab 1
+        showTab(1);
 
-            // Set default value in hidden input only
-            hiddenInput.value = 'PARIS (intramuros)';
-
-            // Show/hide dropdown on focus/blur
+        // Reuse dropdown logic for origin and destination
+        function setupSearchableDropdown(searchInputId, optionsContainerId, hiddenInputId, isMulti) {
+            const searchInput = document.getElementById(searchInputId);
+            const optionsContainer = document.getElementById(optionsContainerId);
+            const hiddenInput = document.getElementById(hiddenInputId);
+            const options = optionsContainer.querySelectorAll('.option');
+            searchInput.value = '';
+            searchInput.placeholder = 'Type to search...';
             searchInput.addEventListener('focus', function() {
-                // Clear the input when focused (unless it has a selected value)
-                if (searchInput.value === '') {
-                    searchInput.placeholder = 'Type to search destinations...';
-                }
                 optionsContainer.style.display = 'block';
                 filterOptions();
             });
-
             searchInput.addEventListener('blur', function() {
-                setTimeout(() => {
-                    optionsContainer.style.display = 'none';
-                    // If no value is entered, show the default in placeholder
-                    if (searchInput.value === '') {
-                        searchInput.placeholder = 'PARIS (intramuros) - Type to search destinations...';
-                    }
-                }, 200);
+                setTimeout(() => { optionsContainer.style.display = 'none'; }, 200);
             });
-
-            // Filter options as user types
-            searchInput.addEventListener('input', function() {
-                filterOptions();
-            });
-
-            // Handle option selection
-            options.forEach(option => {
-                option.addEventListener('click', function() {
-                    const value = this.getAttribute('data-value');
-                    const text = this.textContent;
-                    searchInput.value = text;
-                    hiddenInput.value = value;
-                    optionsContainer.style.display = 'none';
-                    // Update placeholder to show current selection
-                    searchInput.placeholder = text + ' - Type to search destinations...';
-                });
-            });
-
-            // Keyboard navigation
+            searchInput.addEventListener('input', filterOptions);
             let highlightedIndex = -1;
             searchInput.addEventListener('keydown', function(e) {
-                const visibleOptions = Array.from(options).filter(opt => 
-                    opt.style.display !== 'none'
-                );
-
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    highlightedIndex = Math.min(highlightedIndex + 1, visibleOptions.length - 1);
-                    updateHighlight();
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    highlightedIndex = Math.max(highlightedIndex - 1, -1);
-                    updateHighlight();
-                } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (highlightedIndex >= 0 && highlightedIndex < visibleOptions.length) {
-                        visibleOptions[highlightedIndex].click();
-                    }
-                } else if (e.key === 'Escape') {
-                    optionsContainer.style.display = 'none';
-                    highlightedIndex = -1;
-                }
+                const visibleOptions = Array.from(options).filter(opt => opt.style.display !== 'none');
+                if (e.key === 'ArrowDown') { e.preventDefault(); highlightedIndex = Math.min(highlightedIndex + 1, visibleOptions.length - 1); updateHighlight(); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); highlightedIndex = Math.max(highlightedIndex - 1, -1); updateHighlight(); }
+                else if (e.key === 'Enter') { e.preventDefault(); if (highlightedIndex >= 0 && highlightedIndex < visibleOptions.length) { visibleOptions[highlightedIndex].click(); } }
+                else if (e.key === 'Escape') { optionsContainer.style.display = 'none'; highlightedIndex = -1; }
             });
-
             function filterOptions() {
                 const searchTerm = searchInput.value.toLowerCase();
                 let hasVisibleOptions = false;
-
                 options.forEach(option => {
                     const text = option.textContent.toLowerCase();
-                    if (text.includes(searchTerm)) {
-                        option.style.display = 'block';
-                        hasVisibleOptions = true;
-                    } else {
-                        option.style.display = 'none';
-                    }
+                    if (text.includes(searchTerm)) { option.style.display = 'block'; hasVisibleOptions = true; }
+                    else { option.style.display = 'none'; }
                 });
-
-                if (hasVisibleOptions) {
-                    optionsContainer.style.display = 'block';
-                } else {
-                    optionsContainer.style.display = 'none';
-                }
-
-                highlightedIndex = -1;
-                updateHighlight();
+                optionsContainer.style.display = hasVisibleOptions ? 'block' : 'none';
+                highlightedIndex = -1; updateHighlight();
             }
-
             function updateHighlight() {
-                const visibleOptions = Array.from(options).filter(opt => 
-                    opt.style.display !== 'none'
-                );
-
-                visibleOptions.forEach((option, index) => {
-                    option.classList.remove('highlighted');
-                    if (index === highlightedIndex) {
-                        option.classList.add('highlighted');
-                    }
+                const visibleOptions = Array.from(options).filter(opt => opt.style.display !== 'none');
+                visibleOptions.forEach((option, index) => { option.classList.remove('highlighted'); if (index === highlightedIndex) { option.classList.add('highlighted'); } });
+            }
+            // For multi-select, update the hidden input with all checked values
+            if (isMulti) {
+                optionsContainer.addEventListener('change', function() {
+                    const checked = Array.from(optionsContainer.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+                    hiddenInput.value = checked.join(',');
+                    searchInput.value = checked.join(', ');
+                });
+            } else {
+                options.forEach(option => {
+                    option.addEventListener('click', function() {
+                        const value = this.getAttribute('data-value');
+                        const text = this.textContent;
+                        searchInput.value = text;
+                        hiddenInput.value = value;
+                        optionsContainer.style.display = 'none';
+                        searchInput.placeholder = text + ' - Type to search...';
+                    });
                 });
             }
+        }
+        // Setup dropdowns for tab 2 (multi-select)
+        setupSearchableDropdown('originSearch', 'originOptions', 'originSelect', true);
+        setupSearchableDropdown('destinationSearch', 'destinationOptions', 'destinationSelect', true);
+
+        // Find Connections logic
+        async function findConnections() {
+            const dateRange = document.getElementById('dateRangeInput').value.split(' to ');
+            const start_date = dateRange[0] || '';
+            const end_date = dateRange[1] || dateRange[0] || '';
+            const originSelect = document.getElementById('originSelect');
+            const destinationSelect = document.getElementById('destinationSelect');
+            const origins = Array.from(originSelect.selectedOptions).map(opt => opt.value);
+            const destinations = Array.from(destinationSelect.selectedOptions).map(opt => opt.value);
+            const loading = document.getElementById('connectionsLoading');
+            const error = document.getElementById('connectionsError');
+            const container = document.getElementById('connectionsContainer');
+            const btn = document.getElementById('findConnectionsBtn');
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            container.innerHTML = '';
+            btn.disabled = true;
+            try {
+                const response = await fetch('/get_trip_connections', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        start_date,
+                        end_date,
+                        origin: origins,
+                        destination: destinations
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    displayConnections(data.connections);
+                } else {
+                    showConnectionsError(data.error || 'An error occurred while fetching connections.');
+                }
+            } catch (err) {
+                showConnectionsError('Network error. Please try again.');
+            } finally {
+                loading.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+        function displayConnections(data) {
+            const container = document.getElementById('connectionsContainer');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">No connections found for the selected criteria.</p>';
+                return;
+            }
+            let html = `<h2 style="margin-bottom: 20px; color: #333;">Found ${data.length} connections</h2><div class="trips-table-wrapper"><table class="trips-table"><thead><tr><th>Date</th><th>Route</th><th>Duration</th><th>Trains</th></tr></thead><tbody>`;
+            data.forEach(conn => {
+                html += `<tr><td>${conn.date || ''}</td><td>${conn.route_name}</td><td>${formatDuration(conn.duration)}</td><td><ul style='padding-left: 18px;'>`;
+                conn.train_list.forEach(train => {
+                    html += `<li>${train[0]} (${train[1]}) → ${train[2]} (${train[3]}) <span class='train-number'>Train ${train[4]}</span></li>`;
+                });
+                html += `</ul></td></tr>`;
+            });
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+        function showConnectionsError(message) {
+            const error = document.getElementById('connectionsError');
+            error.innerHTML = `<div class="error">❌ ${message}</div>`;
+            error.style.display = 'block';
+        }
+        function formatDuration(duration) {
+            // duration is an ISO 8601 string or a string like '2:30:00'
+            if (typeof duration === 'string') {
+                const parts = duration.split(':');
+                if (parts.length === 3) {
+                    const h = parseInt(parts[0]);
+                    const m = parseInt(parts[1]);
+                    return `${h}h${m > 0 ? m + 'm' : ''}`;
+                }
+            }
+            return duration;
+        }
+    </script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- Choices.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            flatpickr("#dateRangeInput", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                minDate: "{{ dates[0].value }}",
+                maxDate: "{{ dates[-1].value }}"
+            });
+            flatpickr("#dayTripDateInput", {
+                mode: "single",
+                dateFormat: "Y-m-d",
+                minDate: "{{ dates[0].value }}",
+                maxDate: "{{ dates[-1].value }}"
+            });
+            // Initialize Choices.js for multi-selects
+            new Choices('#originSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Select origins...' });
+            new Choices('#destinationSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Select destinations...' });
         });
     </script>
 </body>
