@@ -133,6 +133,40 @@ def get_destinations():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/get_trip_connections', methods=['POST'])
+def get_trip_connections_endpoint():
+    data = request.get_json()
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
+    origin = data.get('origin')
+    destination = data.get('destination')
+
+    # Validate input
+    if not (start_date and end_date and origin and destination):
+        return jsonify({'success': False, 'error': 'Missing required parameters.'}), 400
+
+    # Ensure origin and destination are always flat lists of strings
+    if isinstance(origin, str):
+        origins = [origin]
+    else:
+        origins = list(origin) if origin else []
+    if isinstance(destination, str):
+        destinations = [destination]
+    else:
+        destinations = list(destination) if destination else []
+
+    try:
+        # Build date window (inclusive)
+        from datetime import datetime, timedelta
+        d1 = datetime.strptime(start_date, '%Y-%m-%d')
+        d2 = datetime.strptime(end_date, '%Y-%m-%d')
+        num_days = (d2 - d1).days + 1
+        dates = [(d1 + timedelta(days=i)).strftime('%Y-%m-%d') for i in range(num_days)]
+        results = utils.get_trip_connections(dates, origins, destinations)
+        return jsonify({'success': True, 'connections': results})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 def parse_time_to_minutes(time_str):
     """Convert time string like '2h49m' to minutes"""
     import re
@@ -166,8 +200,9 @@ def format_minutes_to_time(minutes):
 if __name__ == '__main__':
     # Use environment variables for production settings
     debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    port = 5001 if debug_mode else 5000
     app.run(
         debug=debug_mode,
         host='0.0.0.0', 
-        port=int(os.environ.get('PORT', 5000))
+        port=port
     )

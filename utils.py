@@ -287,7 +287,7 @@ def get_trip_connections(dates, origins, destinations):
                 pr.connection_count + 1 AS connection_count,
                 pr.first_leg_departure,
                 t.heure_arrivee AS last_leg_arrival,
-                CAST(pr.route_description || ' -> ' || t.origine || ' -> ' || t.destination AS TEXT)
+                CAST(pr.route_description || ' -> ' || t.destination AS TEXT)
                     AS route_description,
                 CAST(pr.route_uid || '-' || t.uid AS TEXT) AS route_uid
             FROM TGVMAX t
@@ -358,8 +358,9 @@ def get_trip_connections(dates, origins, destinations):
             params = {"uid": train}
             train_dic['train_list'].append(list(run_query(query, params=params).values[0]))
         train_dic['route_name'] = route['route_description']
-        # print(route.keys)
-        train_dic['duration'] = datetime.strptime(route['last_leg_arrival'], '%H:%M') - datetime.strptime(route['first_leg_departure'], '%H:%M')
+        duration_td = datetime.strptime(route['last_leg_arrival'], '%H:%M') - datetime.strptime(route['first_leg_departure'], '%H:%M')
+        train_dic['duration'] = format_duration(duration_td)
+        train_dic['date'] = route['date']
         result_list.append(train_dic)
 
     idx = np.argsort([result["duration"] for result in result_list])
