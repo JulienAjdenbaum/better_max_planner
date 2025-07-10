@@ -1,98 +1,173 @@
-import streamlit as st
+from flask import Flask, render_template, request, jsonify
+from datetime import datetime, timedelta
 import utils
-import datetime
-import pandas as pd
-import random
+import os
 
-random.seed(0)
+app = Flask(__name__)
 
-today = datetime.datetime.now() + datetime.timedelta(days=1)
+@app.route('/')
+def index():
+    # Generate dates for the next 30 days
+    today = datetime.now()
+    dates = []
+    for i in range(30):
+        date = today + timedelta(days=i)
+        dates.append({
+            'value': date.strftime('%Y-%m-%d'),
+            'label': date.strftime('%A, %B %d, %Y')
+        })
+    
+    # Get all destinations from database
+    all_destinations = utils.get_all_towns()
+    
+    return render_template('index.html', dates=dates, destinations=all_destinations)
 
-# TODO
-# Photos villes
-# Météo
-# Mettre sous forme de cart
-# Lien vers SNCF Connect
-# Prix sans MAX
-# Correspondances
-# Flexibilité
-# Background picture
-# chatbot
+@app.route('/get_destinations', methods=['POST'])
+def get_destinations():
+    data = request.get_json()
+    selected_date = data.get('date')
+    station = data.get('station', 'PARIS (intramuros)')
+    
+    try:
+        trips = utils.find_optimal_destinations(station, selected_date)
+        
+        # Group trips by destination
+        grouped_trips = {}
+        for trip in trips:
+            dest = trip['destination']
+            if dest not in grouped_trips:
+                grouped_trips[dest] = {
+                    'destination': dest,
+                    'trips': [],
+                    'outbound_trips': [],
+                    'return_trips': [],
+                    'avg_travel_time': 0,
+                    'max_time_at_destination': 0
+                }
+            
+            grouped_trips[dest]['trips'].append(trip)
+            
+            # Add to outbound trips
+            outbound_key = f"{trip['outbound_departure']}-{trip['outbound_arrival']}"
+            existing_outbound_keys = [f"{t['departure']}-{t['arrival']}" for t in grouped_trips[dest]['outbound_trips']]
+            if outbound_key not in existing_outbound_keys:
+                grouped_trips[dest]['outbound_trips'].append({
+                    'departure': trip['outbound_departure'],
+                    'arrival': trip['outbound_arrival'],
+                    'train_no': trip['outbound_train'],
+                    'axe': trip.get('outbound_axe', 'N/A')
+                })
+            
+            # Add to return trips
+            return_key = f"{trip['return_departure']}-{trip['return_arrival']}"
+            existing_return_keys = [f"{t['departure']}-{t['arrival']}" for t in grouped_trips[dest]['return_trips']]
+            if return_key not in existing_return_keys:
+                grouped_trips[dest]['return_trips'].append({
+                    'departure': trip['return_departure'],
+                    'arrival': trip['return_arrival'],
+                    'train_no': trip['return_train'],
+                    'axe': trip.get('return_axe', 'N/A')
+                })
+        
+        # Calculate averages and max for each destination
+        for dest_data in grouped_trips.values():
+            travel_times = []
+            times_at_dest = []
+            axes = []
+            
+            for trip in dest_data['trips']:
+                # Parse travel time (e.g., "2h49m" -> minutes)
+                travel_time_str = trip['total_travel_time']
+                travel_minutes = parse_time_to_minutes(travel_time_str)
+                travel_times.append(travel_minutes)
+                
+                # Parse time at destination
+                dest_time_str = trip['time_at_destination']
+                dest_minutes = parse_time_to_minutes(dest_time_str)
+                times_at_dest.append(dest_minutes)
+                
+                # Collect axes
+                if 'outbound_axe' in trip:
+                    axes.append(trip['outbound_axe'])
+                if 'return_axe' in trip:
+                    axes.append(trip['return_axe'])
+            
+            # Calculate average travel time and max time at destination
+            avg_travel_minutes = round(sum(travel_times) / len(travel_times))
+            max_dest_minutes = max(times_at_dest)
+            
+            dest_data['avg_travel_time'] = format_minutes_to_time(avg_travel_minutes)
+            dest_data['max_time_at_destination'] = format_minutes_to_time(max_dest_minutes)
+            
+            # Sort outbound and return trips by departure time
+            dest_data['outbound_trips'].sort(key=lambda x: x['departure'])
+            dest_data['return_trips'].sort(key=lambda x: x['departure'])
+            
+            # Find the most frequent axis, with special handling for INTERNATIONAL
+            from collections import Counter
+            if axes:
+                axe_counts = Counter(axes)
+                
+                # Check if ALL axes are INTERNATIONAL
+                if len(axe_counts) == 1 and 'INTERNATIONAL' in axe_counts:
+                    most_common_axe = 'INTERNATIONAL'
+                else:
+                    # Filter out INTERNATIONAL and find the most common non-international axis
+                    non_international_axes = {axe: count for axe, count in axe_counts.items() if axe != 'INTERNATIONAL'}
+                    if non_international_axes:
+                        most_common_axe = max(non_international_axes.items(), key=lambda x: x[1])[0]
+                    else:
+                        most_common_axe = None
+            else:
+                most_common_axe = None
+            dest_data['main_axe'] = most_common_axe
+        
+        # Sort by max time at destination (descending)
+        sorted_destinations = sorted(
+            grouped_trips.values(), 
+            key=lambda x: parse_time_to_minutes(x['max_time_at_destination']), 
+            reverse=True
+        )
+        
+        return jsonify({'success': True, 'destinations': sorted_destinations})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
-tab1, tab2 = st.tabs(["Trouver une destination", "Connections"])
+def parse_time_to_minutes(time_str):
+    """Convert time string like '2h49m' to minutes"""
+    import re
+    hours = 0
+    minutes = 0
+    
+    # Extract hours
+    hour_match = re.search(r'(\d+)h', time_str)
+    if hour_match:
+        hours = int(hour_match.group(1))
+    
+    # Extract minutes
+    minute_match = re.search(r'(\d+)m', time_str)
+    if minute_match:
+        minutes = int(minute_match.group(1))
+    
+    return hours * 60 + minutes
 
-with tab1:
-    st.title("TGV Max Trip Finder")
-    all_towns = utils.get_all_towns()
-    station = st.selectbox("Entre ta station de départ :", all_towns, index=all_towns.index("PARIS (intramuros)"), key=random.randint(0, int(1e6)))
-    dates = st.date_input(
-        "Entre tes dates :",
-        [today, today],
-        min_value=today,
-        max_value=today + datetime.timedelta(days=30),
-        help='Rentre deux fois la même date pour un aller retour dans la journée!',
-        format="DD/MM/YYYY",
+def format_minutes_to_time(minutes):
+    """Convert minutes to time string like '2h49m'"""
+    hours = minutes // 60
+    mins = minutes % 60
+    
+    if hours == 0:
+        return f"{mins}m"
+    elif mins == 0:
+        return f"{hours}h"
+    else:
+        return f"{hours}h{mins}m"
+
+if __name__ == '__main__':
+    # Use environment variables for production settings
+    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    app.run(
+        debug=debug_mode,
+        host='0.0.0.0', 
+        port=int(os.environ.get('PORT', 5000))
     )
-    # preferences = st.multiselect("Select your preferences:", ["Fastest", "Cheapest", "Shortest route"])
-
-    if st.button("Trouver mon voyage idéal ", key=random.randint(0, int(1e6))):
-        # Run your trip query function here
-        df = utils.find_optimal_trips(station, dates)
-        df = df[df["temps_sur_place"] > 0]
-        df['temps_aller'] = pd.to_datetime(df['heure_arrivee'], format='%H:%M') - pd.to_datetime(df['heure_depart'],
-                                                                                                 format='%H:%M')
-
-        # df['heure_arrivee'] = pd.to_datetime(df['heure_arrivee'], format='%H:%M')
-        # Iterate over each unique destination
-        # Iterate over each unique destination
-        for destination in df['destination'].unique():
-            # Filter trips for the current destination
-            destination_trips = df[df['destination'] == destination]
-
-            # Calculate the minimum trip duration (earliest departure to arrival)
-            min_trip_duration = destination_trips['temps_aller'].min()
-
-            # Calculate the maximum time spent at the destination
-            max_time_at_destination = destination_trips['temps_sur_place'].max()
-
-            # Create a stylish expander for the destination
-            expander_text = f"**🚄 {destination}** ⏱️ **Durée de l'aller:** {utils.format_duration(min_trip_duration)} 🎉 **Temps sur place:** {max_time_at_destination} heures"
-            with st.expander(expander_text):
-                st.write(f"### Voyages possibles pour {destination}:")
-
-                # Display all trips for the destination
-                for _, trip in destination_trips.iterrows():
-                    st.write(
-                        f"- **Aller**: {trip['heure_depart']} - {trip['heure_arrivee']}, **Retour**: {trip['retour_heure_depart']} - {trip['retour_heure_arrivee']}")
-
-with tab2:
-    st.title("TGV Max Trip Finder: Connexions")
-    all_towns = utils.get_all_towns()
-    station_depart = st.multiselect("Entre ta station de départ :", all_towns, key=random.randint(0, int(1e6)))
-    station_arrivee = st.multiselect("Entre ta station d'arrivée :", all_towns, key=random.randint(0, int(1e6)))
-    dates = st.date_input(
-        "Entre la date :",
-        [today, today],
-        min_value=today,
-        max_value=today + datetime.timedelta(days=30),
-        format="DD/MM/YYYY",
-    )
-
-    nombre_max_connections = st.select_slider("Nombre maximal de connexions",
-        options=range(6),
-    )
-
-    if st.button("Trouver mon voyage idéal ", key=random.randint(0, int(1e6))):
-        # print(dates, station_depart, station_arrivee)
-        results = utils.get_trip_connections(dates, station_depart, station_arrivee)
-        for result in results:
-            expander_text = (f"**🚄 {result["train_list"][0][0]} -> {result["train_list"][-1][2]}** ⏱️ \
-                              **Durée totale:** {utils.format_duration(result["duration"])} \
-                                {result["train_list"][0][1]} -> {result["train_list"][-1][3]}")
-            # expander_text = result["route_name"]
-            with st.expander(expander_text):
-                for train in result["train_list"]:
-                    container = st.container(border=True)
-                    container.write(f"Train n°{train[4]}")
-                    container.write(f"    Départ de {train[0]} à {train[1]}")
-                    container.write(f"    Arrivée à {train[2]} à {train[3]}")

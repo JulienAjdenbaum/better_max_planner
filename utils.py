@@ -15,20 +15,14 @@ engine = create_engine('sqlite:///tgvmax.db')
 def format_duration(td):
     total_minutes = int(td.total_seconds() // 60)
     if total_minutes < 60:
-        return f"{total_minutes} minutes"
+        return f"{total_minutes}m"
     else:
         hours = total_minutes // 60
         minutes = total_minutes % 60
-        heures_string = "heures"
-        if hours == 1:
-            heures_string = "heure"
-        minutes_string = "minutes"
-        if minutes == 1:
-            minutes_string = "minute"
         if minutes == 0:
-            return f"{hours} {heures_string}"
+            return f"{hours}h"
         else:
-            return f"{hours} {heures_string} et {minutes} {minutes_string}"
+            return f"{hours}h{minutes}m"
 
 def scheduled_task():
     print("Did task")
@@ -80,26 +74,149 @@ def get_all_towns():
 
 def find_optimal_trips(station, dates):
     """Return all distinct towns available in the dataset."""
-    n_jours = (dates[1] - dates[0]).days
+    # Convert string dates to datetime objects
+    date1 = datetime.strptime(dates[0], '%Y-%m-%d')
+    date2 = datetime.strptime(dates[1], '%Y-%m-%d')
+    n_jours = (date2 - date1).days
     print(n_jours)
+    # query = """
+    # SELECT distinct aller.destination
+
+    # FROM TGVMAX as aller
+    # JOIN (SELECT *
+    #       FROM TGVMAX 
+    #       WHERE date = :date2 AND destination = :ville AND DISPO = 'OUI' AND Axe != 'IC NUIT') as retour
+    # ON aller.destination = retour.origine
+    # WHERE aller.date = :date1 AND aller.DISPO = 'OUI' AND aller.origine = :ville 
+    # AND aller.Axe != 'IC NUIT'
+    # AND aller.heure_arrivee < retour.heure_depart
+    # -- AND aller.destination = "RENNES"
+    # AND aller.heure_depart > 10
+    # ORDER BY (24 - aller.heure_arrivee + retour.heure_depart) DESC
+    # """
+    
+    # Generate placeholders for the IN clause
+    date_placeholders = ', '.join([f':date_{i}' for i in range(len(dates))])
+    
+    query = f"""
+    SELECT *
+    FROM TGVMAX as aller
+    WHERE aller.date in ({date_placeholders}) AND aller.origine = :ville AND axe = "SUD EST" AND aller.destination = "VALENCE TGV" AND DISPO = "OUI";
+    """
+    
+    # Build parameters dictionary
+    params = {}
+    for i, date in enumerate(dates):
+        params[f'date_{i}'] = date
+    params['ville'] = station
+
+    return run_query(query, params=params, as_list=False)
+
+
+def find_optimal_destinations(station, dates):
+    """Find optimal destinations for round trips from a given station on specified dates."""
+    # Handle both single date and date pair inputs
+    if isinstance(dates, str):
+        # Single date provided - use same date for outbound and return
+        date1 = datetime.strptime(dates, '%Y-%m-%d')
+        date2 = date1
+        print(f"Planning day trip on {dates}")
+    else:
+        # Date pair provided
+        date1 = datetime.strptime(dates[0], '%Y-%m-%d')
+        date2 = datetime.strptime(dates[1], '%Y-%m-%d')
+        n_jours = (date2 - date1).days
+        print(f"Planning trip for {n_jours} days")
+    
     query = """
-    SELECT aller.destination, aller.heure_depart, aller.heure_arrivee, retour.heure_depart as retour_heure_depart, retour.heure_arrivee as retour_heure_arrivee, (24*:n_jours - aller.heure_arrivee + retour.heure_depart) as temps_sur_place
+    SELECT 
+        aller.destination,
+        aller.heure_depart as outbound_departure,
+        aller.heure_arrivee as outbound_arrival,
+        retour.heure_depart as return_departure,
+        retour.heure_arrivee as return_arrival,
+        aller.train_no as outbound_train,
+        retour.train_no as return_train,
+        aller.axe as outbound_axe,
+        retour.axe as return_axe
     FROM TGVMAX as aller
     JOIN (SELECT *
           FROM TGVMAX 
           WHERE date = :date2 AND destination = :ville AND DISPO = 'OUI' AND Axe != 'IC NUIT') as retour
     ON aller.destination = retour.origine
-    WHERE aller.date = :date1 AND aller.DISPO = 'OUI' AND aller.origine = :ville AND aller.Axe != 'IC NUIT'
+    WHERE aller.date = :date1 AND aller.DISPO = 'OUI' AND aller.origine = :ville 
+    AND aller.Axe != 'IC NUIT'
+    AND aller.heure_arrivee < retour.heure_depart
+    AND aller.heure_depart > 10
     ORDER BY (24 - aller.heure_arrivee + retour.heure_depart) DESC
     """
+    
+    # Build parameters dictionary
     params = {
-        "date1": dates[0],
-        "date2": dates[1],
-        "ville": station,
-        'n_jours': n_jours
+        'date1': date1.strftime('%Y-%m-%d'),
+        'date2': date2.strftime('%Y-%m-%d'),
+        'ville': station
     }
 
-    return run_query(query, params=params)
+    result = run_query(query, params=params, as_list=False)
+    
+    # Calculate travel times and time at destination
+    trips_data = []
+    for _, row in result.iterrows():
+        # Parse times
+        outbound_depart = datetime.strptime(row['outbound_departure'], '%H:%M')
+        outbound_arrive = datetime.strptime(row['outbound_arrival'], '%H:%M')
+        return_depart = datetime.strptime(row['return_departure'], '%H:%M')
+        return_arrive = datetime.strptime(row['return_arrival'], '%H:%M')
+        
+        # Handle overnight trips (arrival time earlier than departure time)
+        if outbound_arrive < outbound_depart:
+            outbound_arrive += timedelta(days=1)
+        if return_arrive < return_depart:
+            return_arrive += timedelta(days=1)
+        
+        # Handle cases where return departure is before outbound arrival
+        if return_depart < outbound_arrive:
+            return_depart += timedelta(days=1)
+            return_arrive += timedelta(days=1)
+        
+        # Exclude trips where outbound arrival is on the next day (not a valid day trip)
+        if (outbound_arrive - outbound_depart) >= timedelta(days=1):
+            continue
+        # Exclude trips where return departure is not on the same day as outbound departure
+        if return_depart.date() != outbound_depart.date():
+            continue
+        
+        # Calculate travel times
+        outbound_travel_time = outbound_arrive - outbound_depart
+        return_travel_time = return_arrive - return_depart
+        total_travel_time = outbound_travel_time + return_travel_time
+        
+        # Calculate time at destination
+        time_at_destination = return_depart - outbound_arrive
+        
+        trips_data.append({
+            'destination': row['destination'],
+            'outbound_departure': row['outbound_departure'],
+            'outbound_arrival': row['outbound_arrival'],
+            'return_departure': row['return_departure'],
+            'return_arrival': row['return_arrival'],
+            'outbound_train': row['outbound_train'],
+            'return_train': row['return_train'],
+            'outbound_axe': row['outbound_axe'],
+            'return_axe': row['return_axe'],
+            'outbound_travel_time': format_duration(outbound_travel_time),
+            'return_travel_time': format_duration(return_travel_time),
+            'total_travel_time': format_duration(total_travel_time),
+            'time_at_destination': format_duration(time_at_destination),
+            'time_at_destination_minutes': time_at_destination.total_seconds() / 60
+        })
+    
+    # Sort by time at destination (descending)
+    trips_data.sort(key=lambda x: x['time_at_destination_minutes'], reverse=True)
+    
+    return trips_data
+
 
 
 def preview_query(query, params):
@@ -266,8 +383,37 @@ if __name__ == "__main__":
     # destinations = ["AVIGNON TGV", "AVIGNON CENTRE", "ORANGE", "MONTELIMAR GARE SNCF", "VALENCE TGV RHONE-ALPES SUD",
     #                 "VALENCE VILLE"]
     #
-    dates = ("2024-11-14", "2024-11-14")
+    dates = ("2025-07-13")
     origins = ['PARIS (intramuros)']
     destinations = ['AVIGNON TGV']
-
-    print(get_trip_connections(dates, origins, destinations))
+    # print(find_optimal_trips(origins[0], dates))
+    trips = find_optimal_destinations(origins[0], dates)
+    
+    if trips:
+        print(f"\n{'='*100}")
+        print(f"OPTIMAL DESTINATIONS FROM {origins[0].upper()} ON {dates}")
+        print(f"{'='*100}")
+        
+        # Create table header with better spacing
+        print(f"{'Destination':<25} {'Outbound':<20} {'Return':<20} {'Total Travel':<15} {'Time at Dest':<15}")
+        print(f"{'':<25} {'Depart-Arrive':<20} {'Depart-Arrive':<20} {'Time':<15} {'(hrs:min)':<15}")
+        print("-" * 100)
+        
+        for trip in trips:
+            # Handle long destination names by truncating with ellipsis
+            dest_name = trip['destination']
+            if len(dest_name) > 24:
+                dest_name = dest_name[:21] + "..."
+            
+            print(f"{dest_name:<25} "
+                  f"{trip['outbound_departure']}-{trip['outbound_arrival']:<20} "
+                  f"{trip['return_departure']}-{trip['return_arrival']:<20} "
+                  f"{trip['total_travel_time']:<15} "
+                  f"{trip['time_at_destination']:<15}")
+        
+        print(f"{'='*100}")
+        print(f"Found {len(trips)} optimal destinations")
+    else:
+        print("No optimal destinations found for the given criteria.")
+    
+    # print(get_trip_connections(dates, origins, destinations))
