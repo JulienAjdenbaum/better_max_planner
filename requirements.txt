@@ -2,5 +2,6 @@ setuptools
 numpy
 pandas
 sqlalchemy
-streamlit
+flask
 apscheduler
+requests
