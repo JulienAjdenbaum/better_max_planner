@@ -101,6 +101,117 @@ update_db(engine)
 - `PORT`: Port number (default: 5000)
 - `PYTHONUNBUFFERED`: Set to 1 for immediate log output
 
+## Logging System
+
+The application implements a comprehensive logging system that captures detailed information about every request and response for monitoring, debugging, and performance analysis.
+
+### Log Files
+
+The application creates two separate log files:
+
+1. **Main Application Log**: `/var/log/tgvmax_app.log`
+   - Contains application-level logs, processing details, and errors
+   - Includes endpoint-specific timing and processing information
+
+2. **Request Timing Log**: `/var/log/tgvmax_requests.log`
+   - Dedicated file for request/response timing data
+   - Contains complete request and response information for every HTTP request
+
+### Logging Configuration
+
+The logging system is configured in `logging_config.py` with the following features:
+
+- **Rotating file handlers**: Logs are automatically rotated when they reach 1MB
+- **Backup retention**: Keeps 5 backup files for historical analysis
+- **Separate loggers**: Different loggers for application logs vs. request timing
+- **Detailed formatting**: Includes timestamps, log levels, and source information
+
+### What Gets Logged
+
+#### Request Information
+- **HTTP Method**: GET, POST, etc.
+- **Request Path**: The endpoint being accessed
+- **Status Code**: HTTP response status (200, 404, 500, etc.)
+- **Duration**: Total request processing time in seconds
+- **Client IP**: Remote address of the client
+- **User Agent**: Browser/client information
+- **Query String**: URL parameters
+- **Request Headers**: All headers (excluding Authorization and Cookie for privacy)
+- **Request Body**: JSON data for POST/PUT requests
+
+#### Response Information
+- **JSON Responses**: Complete JSON response data for API endpoints
+- **HTML Responses**: First 500 characters of HTML responses for web pages
+- **Error Responses**: Full error information including stack traces
+
+#### Processing Details
+- **Endpoint-specific timing**: Time spent in specific endpoint logic
+- **Database query timing**: Time for database operations
+- **Processing results**: Number of results found, processing statistics
+
+### Example Log Entries
+
+#### Request Timing Log Entry
+```
+2025-07-11 03:49:52,610 - INFO - request_timing - [app.py:42] - Request: POST /get_destinations - Status: 200 - Duration: 0.122s - IP: 127.0.0.1 - User-Agent: curl/7.88.1 - Query:  - JSON: {'date': '2025-07-11', 'stations': ['PARIS (intramuros)']} - Headers: {'Host': 'localhost:5001', 'User-Agent': 'curl/7.88.1', 'Accept': '*/*', 'Content-Type': 'application/json', 'Content-Length': '58'} - Response: {'destinations': [...], 'success': True}
+```
+
+#### Application Log Entry
+```
+2025-07-11 03:49:52,366 - INFO - utils - Planification d'un voyage à la journée le 2025-07-11
+2025-07-11 03:49:52,528 - INFO - __main__ - Found 2 destinations in 0.161s
+```
+
+### Logging Middleware
+
+The application uses Flask middleware to automatically log every request:
+
+```python
+@app.before_request
+def before_request():
+    request.start_time = time.time()
+
+@app.after_request
+def after_request(response):
+    # Log complete request/response information
+    # Including timing, headers, body, and response data
+```
+
+### Performance Monitoring
+
+The logging system enables:
+
+- **Response Time Analysis**: Track which endpoints are slowest
+- **Error Tracking**: Identify which requests fail and why
+- **Usage Patterns**: See which endpoints are most used
+- **Client Analysis**: Monitor different user agents and IPs
+- **Data Flow**: Complete audit trail of all requests and responses
+
+### Log Analysis
+
+To analyze the logs:
+
+```bash
+# View recent requests
+tail -f /var/log/tgvmax_requests.log
+
+# Find slow requests (>1 second)
+grep "Duration: [1-9]\." /var/log/tgvmax_requests.log
+
+# Count requests by endpoint
+grep "Request:" /var/log/tgvmax_requests.log | awk '{print $8}' | sort | uniq -c
+
+# Find errors
+grep "Status: [4-5]" /var/log/tgvmax_requests.log
+```
+
+### Privacy Considerations
+
+The logging system is designed with privacy in mind:
+- **Sensitive headers excluded**: Authorization and Cookie headers are not logged
+- **Configurable redaction**: Additional fields can be excluded as needed
+- **Local storage**: Logs are stored locally and not transmitted externally
+
 ## Monitoring
 
 Check container health:

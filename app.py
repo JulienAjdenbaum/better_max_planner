@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import logging
 import utils
 import os
+import time
 from logging_config import setup_logging
 
 setup_logging()
@@ -10,8 +11,54 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+# Request timing middleware
+@app.before_request
+def before_request():
+    request.start_time = time.time()
+
+@app.after_request
+def after_request(response):
+    if hasattr(request, 'start_time'):
+        duration = time.time() - request.start_time
+        request_logger = logging.getLogger('request_timing')
+        # Get query string
+        query_string = request.query_string.decode('utf-8') if request.query_string else ''
+        # Get JSON body if present
+        try:
+            json_body = request.get_json(silent=True)
+        except Exception:
+            json_body = None
+        # Get headers, excluding sensitive ones
+        headers = {k: v for k, v in request.headers.items() if k.lower() not in ['authorization', 'cookie']}
+        # Get response data
+        response_data = None
+        if response.is_json:
+            response_data = response.get_json(silent=True)
+        else:
+            try:
+                response_data = response.get_data(as_text=True)[:500]
+            except Exception:
+                response_data = '<non-textual response>'
+        request_logger.info(
+            "Request: %s %s - Status: %s - Duration: %.3fs - IP: %s - User-Agent: %s - Query: %s - JSON: %s - Headers: %s - Response: %s",
+            request.method,
+            request.path,
+            response.status_code,
+            duration,
+            request.remote_addr,
+            request.headers.get('User-Agent', 'Unknown'),
+            query_string,
+            json_body,
+            headers,
+            response_data
+        )
+    return response
+
 @app.route('/')
 def index():
+    logger.info("Serving index page to %s", request.remote_addr)
+    start_time = time.time()
+    
     # Generate dates for the next 30 days
     today = datetime.now()
     dates = []
@@ -28,6 +75,8 @@ def index():
     # Get station groups for the template
     station_groups = utils.STATION_GROUPS
     
+    processing_time = time.time() - start_time
+    logger.info("Index page served in %.3fs", processing_time)
     return render_template('index.html', dates=dates, destinations=all_destinations, station_groups=station_groups)
 
 @app.route('/get_destinations', methods=['POST'])
@@ -44,8 +93,10 @@ def get_destinations():
     if not stations:
         stations = ['PARIS (intramuros)']
     
-    logger.info("Request from %s for date %s", request.remote_addr, selected_date)
-    logger.debug("Stations: %s", stations)
+    logger.info("Processing destinations request from %s for date %s with stations: %s", 
+                request.remote_addr, selected_date, stations)
+    
+    start_time = time.time()
     try:
         # Get trips from all selected stations
         all_trips = []
@@ -151,11 +202,13 @@ def get_destinations():
             reverse=True
         )
         
-        logger.info("Found %d destinations", len(sorted_destinations))
+        processing_time = time.time() - start_time
+        logger.info("Found %d destinations in %.3fs", len(sorted_destinations), processing_time)
         logger.debug("Destinations result: %s", sorted_destinations)
         return jsonify({'success': True, 'destinations': sorted_destinations})
     except Exception as e:
-        logger.exception("Error in get_destinations")
+        processing_time = time.time() - start_time
+        logger.exception("Error in get_destinations after %.3fs", processing_time)
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/get_trip_connections', methods=['POST'])
@@ -181,13 +234,15 @@ def get_trip_connections_endpoint():
         destinations = list(destination) if destination else []
 
     logger.info(
-        "Connections request from %s: %s -> %s (%s to %s)",
+        "Processing connections request from %s: %s -> %s (%s to %s)",
         request.remote_addr,
         origins,
         destinations,
         start_date,
         end_date,
     )
+    
+    start_time = time.time()
     try:
         # Build date window (inclusive)
         from datetime import datetime, timedelta
@@ -198,11 +253,13 @@ def get_trip_connections_endpoint():
         # Allow station group connections by default
         allow_station_groups = data.get('allow_station_groups', True)
         results = utils.get_trip_connections(dates, origins, destinations, allow_station_groups=allow_station_groups)
-        logger.info("Found %d connections", len(results))
+        processing_time = time.time() - start_time
+        logger.info("Found %d connections in %.3fs", len(results), processing_time)
         logger.debug("Connections result: %s", results)
         return jsonify({'success': True, 'connections': results})
     except Exception as e:
-        logger.exception("Error in get_trip_connections_endpoint")
+        processing_time = time.time() - start_time
+        logger.exception("Error in get_trip_connections_endpoint after %.3fs", processing_time)
         return jsonify({'success': False, 'error': str(e)})
 
 def parse_time_to_minutes(time_str):
