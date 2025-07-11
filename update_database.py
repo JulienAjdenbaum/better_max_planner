@@ -10,40 +10,34 @@ import sys
 import logging
 from datetime import datetime
 from utils import update_db, engine
+from logging_config import setup_logging
 
-# Configuration de la journalisation
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('/var/log/tgvmax_update.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
+setup_logging('/var/log/tgvmax_update.log')
+logger = logging.getLogger(__name__)
 
 def main():
     """Fonction principale pour mettre à jour la base de données."""
     try:
-        logging.info("Début du processus de mise à jour de la base de données")
+        logger.info("Début du processus de mise à jour de la base de données")
         
         # Vérifier si le fichier de base de données existe et est accessible en écriture
         db_path = 'tgvmax.db'
         if not os.path.exists(db_path):
-            logging.error(f"Fichier de base de données {db_path} introuvable")
+            logger.error("Fichier de base de données %s introuvable", db_path)
             return 1
-        
+
         if not os.access(db_path, os.W_OK):
-            logging.error(f"Le fichier de base de données {db_path} n'est pas accessible en écriture")
+            logger.error("Le fichier de base de données %s n'est pas accessible en écriture", db_path)
             return 1
         
         # Mettre à jour la base de données
         update_db(engine)
-        
-        logging.info("Mise à jour de la base de données terminée avec succès")
+
+        logger.info("Mise à jour de la base de données terminée avec succès")
         return 0
         
-    except Exception as e:
-        logging.error(f"Erreur lors de la mise à jour de la base de données : {str(e)}")
+    except Exception:
+        logger.exception("Erreur lors de la mise à jour de la base de données")
         return 1
 
 if __name__ == "__main__":
