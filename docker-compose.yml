@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   tgvmax-planner:
     build: .
@@ -12,6 +10,8 @@ services:
     volumes:
       # Mount database for persistence
       - ./tgvmax.db:/app/tgvmax.db
+      # Mount logs directory for external access
+      - ./logs:/var/log
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/"]

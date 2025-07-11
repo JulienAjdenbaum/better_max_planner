@@ -30,17 +30,12 @@ def after_request(response):
             json_body = None
         # Get headers, excluding sensitive ones
         headers = {k: v for k, v in request.headers.items() if k.lower() not in ['authorization', 'cookie']}
-        # Get response data
+        # Only log response data if it's JSON
         response_data = None
         if response.is_json:
             response_data = response.get_json(silent=True)
-        else:
-            try:
-                response_data = response.get_data(as_text=True)[:500]
-            except Exception:
-                response_data = '<non-textual response>'
         request_logger.info(
-            "Request: %s %s - Status: %s - Duration: %.3fs - IP: %s - User-Agent: %s - Query: %s - JSON: %s - Headers: %s - Response: %s",
+            "Request: %s %s - Status: %s - Duration: %.3fs - IP: %s - User-Agent: %s - Query: %s - JSON: %s - Headers: %s%s",
             request.method,
             request.path,
             response.status_code,
@@ -50,7 +45,7 @@ def after_request(response):
             query_string,
             json_body,
             headers,
-            response_data
+            f" - Response: {response_data}" if response_data is not None else ""
         )
     return response
 
