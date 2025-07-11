@@ -949,7 +949,17 @@
                         html += `<div style="color: #f57c00; font-size: 0.9em; font-style: italic; margin-left: 20px; margin-bottom: 8px;">⚠️ Attention correspondance entre ${train[0]} et ${train[2]} non incluse dans TGV MAX. Renseignez-vous et prévoyez au moins ${connectionTime} minutes.</div>`;
                     } else {
                         // Regular train - show with times and train number
-                        html += `<li>${train[0]} (${train[1]}) → ${train[2]} (${train[3]}) <span class='train-number'>Train ${train[4]}</span></li>`;
+                        const origin = train[0] || '';
+                        const departure = train[1] || '';
+                        const destination = train[2] || '';
+                        const arrival = train[3] || '';
+                        const trainNumber = train[4] || '';
+                        
+                        if (origin && destination) {
+                            html += `<li>${origin} (${departure}) → ${destination} (${arrival}) <span class='train-number'>Train ${trainNumber}</span></li>`;
+                        } else {
+                            html += `<li>Train ${trainNumber}</li>`;
+                        }
                     }
                 });
                 html += `</ul></td></tr>`;
@@ -963,16 +973,26 @@
             error.style.display = 'block';
         }
         function formatDuration(duration) {
-            // duration is an ISO 8601 string or a string like '2:30:00'
+            // Handle different duration formats
             if (typeof duration === 'string') {
+                // Handle format like '2h30m' or '30m'
+                if (duration.includes('h') || duration.includes('m')) {
+                    return duration;
+                }
+                
+                // Handle format like '2:30:00'
                 const parts = duration.split(':');
                 if (parts.length === 3) {
                     const h = parseInt(parts[0]);
                     const m = parseInt(parts[1]);
-                    return `${h}h${m > 0 ? m + 'm' : ''}`;
+                    if (h > 0) {
+                        return `${h}h${m > 0 ? m + 'm' : ''}`;
+                    } else {
+                        return `${m}m`;
+                    }
                 }
             }
-            return duration;
+            return duration || '0m';
         }
     </script>
     <!-- Flatpickr JS -->
