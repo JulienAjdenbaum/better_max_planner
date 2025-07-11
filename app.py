@@ -1,7 +1,12 @@
 from flask import Flask, render_template, request, jsonify
 from datetime import datetime, timedelta
+import logging
 import utils
 import os
+from logging_config import setup_logging
+
+setup_logging()
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -39,6 +44,8 @@ def get_destinations():
     if not stations:
         stations = ['PARIS (intramuros)']
     
+    logger.info("Request from %s for date %s", request.remote_addr, selected_date)
+    logger.debug("Stations: %s", stations)
     try:
         # Get trips from all selected stations
         all_trips = []
@@ -144,8 +151,11 @@ def get_destinations():
             reverse=True
         )
         
+        logger.info("Found %d destinations", len(sorted_destinations))
+        logger.debug("Destinations result: %s", sorted_destinations)
         return jsonify({'success': True, 'destinations': sorted_destinations})
     except Exception as e:
+        logger.exception("Error in get_destinations")
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/get_trip_connections', methods=['POST'])
@@ -170,6 +180,14 @@ def get_trip_connections_endpoint():
     else:
         destinations = list(destination) if destination else []
 
+    logger.info(
+        "Connections request from %s: %s -> %s (%s to %s)",
+        request.remote_addr,
+        origins,
+        destinations,
+        start_date,
+        end_date,
+    )
     try:
         # Build date window (inclusive)
         from datetime import datetime, timedelta
@@ -180,8 +198,11 @@ def get_trip_connections_endpoint():
         # Allow station group connections by default
         allow_station_groups = data.get('allow_station_groups', True)
         results = utils.get_trip_connections(dates, origins, destinations, allow_station_groups=allow_station_groups)
+        logger.info("Found %d connections", len(results))
+        logger.debug("Connections result: %s", results)
         return jsonify({'success': True, 'connections': results})
     except Exception as e:
+        logger.exception("Error in get_trip_connections_endpoint")
         return jsonify({'success': False, 'error': str(e)})
 
 def parse_time_to_minutes(time_str):
