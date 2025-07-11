@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TGV Max Trip Finder</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚄</text></svg>">
     <style>
         * {
             margin: 0;
@@ -211,6 +212,8 @@
             margin-bottom: 20px;
         }
 
+
+
         .trips-table {
             width: 100%;
             border-collapse: collapse;
@@ -272,12 +275,40 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
         }
 
         .destination-card:hover {
             border-color: #667eea;
             transform: translateY(-2px);
             box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .expand-indicator {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+        }
+
+        .destination-card:hover .expand-indicator {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .destination-card.expanded .expand-indicator {
+            transform: rotate(180deg);
         }
 
         .destination-header {
@@ -457,6 +488,14 @@
                 padding: 15px;
             }
             
+            .expand-indicator {
+                bottom: 10px;
+                right: 10px;
+                width: 18px;
+                height: 18px;
+                font-size: 10px;
+            }
+            
             .destination-header {
                 flex-direction: column;
                 gap: 10px;
@@ -495,12 +534,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <!-- Choices.js CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚄 TGV Max Trip Finder</h1>
-            <p>Find the best day trips from Paris with optimal time at destination</p>
+            <h1>🚄 TGV Max Route Planner</h1>
+            <p>Plan your TGV Max journeys with optimal connections and transfer times</p>
         </div>
 
         <!-- Tab Navigation -->
@@ -511,36 +551,36 @@
 
         <!-- Tab 1: Day trips Search -->
         <div id="tab1-content">
-            <div class="controls">
-                <div class="form-group">
+        <div class="controls">
+            <div class="form-group">
                     <label for="dayTripDateInput">Select Date:</label>
-                    <div class="date-input-wrapper">
-                        <input type="text" id="dayTripDateInput" placeholder="Select date" readonly>
-                    </div>
+                <div class="date-input-wrapper">
+                        <input type="text" id="dayTripDateInput" placeholder="Select date" readonly value="{{ dates[0].value }}">
                 </div>
-                <div class="form-group">
-                    <label for="stationSelect">Departure Station:</label>
-                    <div class="searchable-select">
-                        <input type="text" id="stationSearch" placeholder="PARIS (intramuros) - Type to search destinations..." autocomplete="off">
-                        <div class="dropdown-options" id="stationOptions" style="display: none;">
-                            <div class="option" data-value="PARIS (intramuros)">PARIS (intramuros)</div>
-                            {% for destination in destinations %}
-                            <div class="option" data-value="{{ destination }}">{{ destination }}</div>
-                            {% endfor %}
-                        </div>
-                        <input type="hidden" id="stationSelect" value="PARIS (intramuros)">
-                    </div>
-                </div>
-                <button class="btn" onclick="findDestinations()">Find day trip destinations</button>
             </div>
-            <div class="results" id="results">
-                <div class="loading" id="loading" style="display: none;">
-                    <p>🔍 Searching for day trips...</p>
+            <div class="form-group">
+                <label for="stationSelect">Departure Station:</label>
+                <div class="searchable-select">
+                    <input type="text" id="stationSearch" placeholder="PARIS (intramuros)" autocomplete="off">
+                    <div class="dropdown-options" id="stationOptions" style="display: none;">
+                        <div class="option" data-value="PARIS (intramuros)">PARIS (intramuros)</div>
+                        {% for destination in destinations %}
+                        <div class="option" data-value="{{ destination }}">{{ destination }}</div>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" id="stationSelect" value="PARIS (intramuros)">
                 </div>
-                
-                <div id="error" style="display: none;"></div>
-                
-                <div id="tripsContainer"></div>
+            </div>
+                <button class="btn" onclick="findDestinations()">Find day trip destinations</button>
+        </div>
+        <div class="results" id="results">
+            <div class="loading" id="loading" style="display: none;">
+                    <p>🔍 Searching for day trips...</p>
+            </div>
+            
+            <div id="error" style="display: none;"></div>
+            
+            <div id="tripsContainer"></div>
             </div>
         </div>
 
@@ -557,19 +597,46 @@
                 <div class="form-group">
                     <label for="originSelect">Origin(s):</label>
                     <select id="originSelect" multiple>
+                        <!-- ILE DE FRANCE first (forced to top) -->
+                        <option value="ILE DE FRANCE (toutes gares)">ILE DE FRANCE (toutes gares)</option>
+                        <!-- PARIS (intramuros) second -->
+                        <option value="PARIS (intramuros)">PARIS (intramuros)</option>
+                        <!-- Other station groups (alphabetical order) -->
+                        {% for group in station_groups %}
+                        {% if group.group != "ILE DE FRANCE (toutes gares)" and group.group != "PARIS (intramuros)" %}
+                        <option value="{{ group.group }}">{{ group.group }}</option>
+                        {% endif %}
+                        {% endfor %}
+                        <!-- Individual stations (alphabetical order, excluding PARIS) -->
                         {% for destination in destinations %}
+                        {% if destination != "PARIS (intramuros)" and destination != "ILE DE FRANCE (toutes gares)" %}
                         <option value="{{ destination }}">{{ destination }}</option>
+                        {% endif %}
                         {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="destinationSelect">Destination(s):</label>
                     <select id="destinationSelect" multiple>
+                        <!-- ILE DE FRANCE first (forced to top) -->
+                        <option value="ILE DE FRANCE (toutes gares)">ILE DE FRANCE (toutes gares)</option>
+                        <!-- PARIS (intramuros) second -->
+                        <option value="PARIS (intramuros)">PARIS (intramuros)</option>
+                        <!-- Other station groups (alphabetical order) -->
+                        {% for group in station_groups %}
+                        {% if group.group != "ILE DE FRANCE (toutes gares)" and group.group != "PARIS (intramuros)" %}
+                        <option value="{{ group.group }}">{{ group.group }}</option>
+                        {% endif %}
+                        {% endfor %}
+                        <!-- Individual stations (alphabetical order, excluding PARIS) -->
                         {% for destination in destinations %}
+                        {% if destination != "PARIS (intramuros)" and destination != "ILE DE FRANCE (toutes gares)" %}
                         <option value="{{ destination }}">{{ destination }}</option>
+                        {% endif %}
                         {% endfor %}
                     </select>
                 </div>
+
                 <button class="btn" id="findConnectionsBtn" onclick="findConnections()">Find Connections</button>
             </div>
             <div class="results" id="connectionsResults">
@@ -640,13 +707,14 @@
             data.forEach(destination => {
                 html += `
                     <div class="destination-card" onclick="toggleDestinationDetails('${destination.destination.replace(/'/g, "\\'")}')">
+                        <div class="expand-indicator">▼</div>
                         <div class="destination-header">
                             <div class="destination-info">
                                 <h3 class="destination-name">${destination.destination}</h3>
                             </div>
                             <div class="destination-stats">
-                                <span class="stat-badge">Avg Travel: ${destination.avg_travel_time}</span>
-                                <span class="stat-badge highlight">Max Time: ${destination.max_time_at_destination}</span>
+                                <span class="stat-badge">Avg Travel Time: ${destination.avg_travel_time}</span>
+                                <span class="stat-badge highlight">Max Time at Destination: ${destination.max_time_at_destination}</span>
                             </div>
                         </div>
                         <div class="destination-main-axe" style="margin-top: 8px;">
@@ -697,11 +765,14 @@
         function toggleDestinationDetails(destinationName) {
             const detailsId = `details-${destinationName.replace(/[^a-zA-Z0-9]/g, '')}`;
             const detailsElement = document.getElementById(detailsId);
+            const cardElement = detailsElement.closest('.destination-card');
             
             if (detailsElement.style.display === 'none') {
                 detailsElement.style.display = 'block';
+                cardElement.classList.add('expanded');
             } else {
                 detailsElement.style.display = 'none';
+                cardElement.classList.remove('expanded');
             }
         }
 
@@ -770,21 +841,23 @@
                     searchInput.value = checked.join(', ');
                 });
             } else {
-                options.forEach(option => {
-                    option.addEventListener('click', function() {
-                        const value = this.getAttribute('data-value');
-                        const text = this.textContent;
-                        searchInput.value = text;
-                        hiddenInput.value = value;
-                        optionsContainer.style.display = 'none';
+            options.forEach(option => {
+                option.addEventListener('click', function() {
+                    const value = this.getAttribute('data-value');
+                    const text = this.textContent;
+                    searchInput.value = text;
+                    hiddenInput.value = value;
+                    optionsContainer.style.display = 'none';
                         searchInput.placeholder = text + ' - Type to search...';
-                    });
                 });
+            });
             }
         }
         // Setup dropdowns for tab 2 (multi-select)
         setupSearchableDropdown('originSearch', 'originOptions', 'originSelect', true);
         setupSearchableDropdown('destinationSearch', 'destinationOptions', 'destinationSelect', true);
+
+
 
         // Find Connections logic
         async function findConnections() {
@@ -795,6 +868,10 @@
             const destinationSelect = document.getElementById('destinationSelect');
             const origins = Array.from(originSelect.selectedOptions).map(opt => opt.value);
             const destinations = Array.from(destinationSelect.selectedOptions).map(opt => opt.value);
+            
+            // Default max connections to 0
+            const maxConnections = 0;
+            
             const loading = document.getElementById('connectionsLoading');
             const error = document.getElementById('connectionsError');
             const container = document.getElementById('connectionsContainer');
@@ -811,7 +888,8 @@
                         start_date,
                         end_date,
                         origin: origins,
-                        destination: destinations
+                        destination: destinations,
+                        max_connections: maxConnections
                     })
                 });
                 const data = await response.json();
@@ -833,11 +911,20 @@
                 container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">No connections found for the selected criteria.</p>';
                 return;
             }
-            let html = `<h2 style="margin-bottom: 20px; color: #333;">Found ${data.length} connections</h2><div class="trips-table-wrapper"><table class="trips-table"><thead><tr><th>Date</th><th>Route</th><th>Duration</th><th>Trains</th></tr></thead><tbody>`;
+            let html = `<h2 style="margin-bottom: 20px; color: #333;">Found ${data.length} routes</h2><div class="trips-table-wrapper"><table class="trips-table"><thead><tr><th>Date</th><th>Route</th><th>Duration</th><th>Trains</th></tr></thead><tbody>`;
             data.forEach(conn => {
                 html += `<tr><td>${conn.date || ''}</td><td>${conn.route_name}</td><td>${formatDuration(conn.duration)}</td><td><ul style='padding-left: 18px;'>`;
                 conn.train_list.forEach(train => {
-                    html += `<li>${train[0]} (${train[1]}) → ${train[2]} (${train[3]}) <span class='train-number'>Train ${train[4]}</span></li>`;
+                    if (train[4] === 'Correspondance') {
+                        // Virtual connection - show without times but with "Hors TGV MAX" in train number position
+                        html += `<li>${train[0]} → ${train[2]} <span class='train-number'>Hors TGV MAX</span></li>`;
+                        // Add orange warning below the connection with actual connection time (no bullet point)
+                        const connectionTime = train[5] || 15; // Default to 15 minutes if not provided
+                        html += `<div style="color: #f57c00; font-size: 0.9em; font-style: italic; margin-left: 20px; margin-bottom: 8px;">⚠️ Attention correspondance entre ${train[0]} et ${train[2]} non incluse dans TGV MAX. Prévoir au moins ${connectionTime} minutes.</div>`;
+                    } else {
+                        // Regular train - show with times and train number
+                        html += `<li>${train[0]} (${train[1]}) → ${train[2]} (${train[3]}) <span class='train-number'>Train ${train[4]}</span></li>`;
+                    }
                 });
                 html += `</ul></td></tr>`;
             });
@@ -866,6 +953,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <!-- Choices.js JS -->
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             flatpickr("#dateRangeInput", {
@@ -878,11 +966,12 @@
                 mode: "single",
                 dateFormat: "Y-m-d",
                 minDate: "{{ dates[0].value }}",
-                maxDate: "{{ dates[-1].value }}"
+                maxDate: "{{ dates[-1].value }}",
+                defaultDate: "{{ dates[0].value }}"
             });
             // Initialize Choices.js for multi-selects
-            new Choices('#originSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Select origins...' });
-            new Choices('#destinationSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Select destinations...' });
+            new Choices('#originSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Select origins...', shouldSort: false });
+            new Choices('#destinationSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Select destinations...', shouldSort: false });
         });
     </script>
 </body>

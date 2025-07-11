@@ -162,7 +162,9 @@ def get_trip_connections_endpoint():
         d2 = datetime.strptime(end_date, '%Y-%m-%d')
         num_days = (d2 - d1).days + 1
         dates = [(d1 + timedelta(days=i)).strftime('%Y-%m-%d') for i in range(num_days)]
-        results = utils.get_trip_connections(dates, origins, destinations)
+        # Allow station group connections by default
+        allow_station_groups = data.get('allow_station_groups', True)
+        results = utils.get_trip_connections(dates, origins, destinations, allow_station_groups=allow_station_groups)
         return jsonify({'success': True, 'connections': results})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})

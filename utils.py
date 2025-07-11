@@ -62,14 +62,26 @@ def run_query(query, params=None, engine=engine, as_list=False):
 
 
 def get_all_towns():
-    """Return all distinct towns available in the dataset."""
+    """Return all distinct towns available in the dataset, including station group names."""
+    # Get all individual stations from the database
     query = """
         SELECT DISTINCT origine AS Town FROM TGVMAX
         UNION
         SELECT DISTINCT destination AS Town FROM TGVMAX;
     """
-
-    return run_query(query, as_list=True)
+    
+    individual_stations = run_query(query, as_list=True)
+    
+    # Add station group names
+    group_names = list(STATION_GROUP_MAPPING.keys())
+    
+    # Combine individual stations and group names
+    all_towns = individual_stations + group_names
+    
+    # Remove duplicates and sort
+    all_towns = sorted(list(set(all_towns)))
+    
+    return all_towns
 
 
 def find_optimal_trips(station, dates):
@@ -232,7 +244,11 @@ def preview_query(query, params):
     print(formatted_query)
 
 
-def get_trip_connections(dates, origins, destinations):
+def get_trip_connections(dates, origins, destinations, max_connections=0, allow_station_groups=True):
+    # Expand "ILE DE FRANCE" to the list of cities
+    origins = expand_station_groups(origins)
+    destinations = expand_station_groups(destinations)
+    
     # print(type(origins))
     # Generate dynamic placeholders for dates
     date_placeholders = ', '.join([f':date_{i}' for i in range(len(dates))])
@@ -254,6 +270,39 @@ def get_trip_connections(dates, origins, destinations):
     else:
         destination_placeholders = ', '.join([f':destination_{i}' for i in range(len(destinations))])
         destination_condition = f"destination IN ({destination_placeholders})"
+
+    # Create a CTE for station groups to allow connections within groups
+    station_groups_cte = ""
+    station_group_condition = ""
+    if allow_station_groups and STATION_GROUPS:
+        # Create a simpler approach using UNION ALL for SQLite compatibility
+        group_unions = []
+        for group in STATION_GROUPS:
+            for station_data in group["stations"]:
+                if isinstance(station_data, list):
+                    # New format: [station1, station2, connection_time]
+                    station1, station2, connection_time = station_data[0], station_data[1], station_data[2]
+                    group_unions.append(f"SELECT '{station1}' as station1, '{station2}' as station2, {connection_time} as connection_time")
+                    # Also add reverse direction
+                    group_unions.append(f"SELECT '{station2}' as station1, '{station1}' as station2, {connection_time} as connection_time")
+                else:
+                    # Old format: just station name (for backward compatibility)
+                    pass  # Skip old format for now
+        
+        if group_unions:
+            station_groups_cte = f"""
+            , station_groups AS (
+                {' UNION ALL '.join(group_unions)}
+            )
+            """
+            station_group_condition = """
+                OR
+                -- Connection through station group: both stations are in the same group
+                EXISTS (
+                    SELECT 1 FROM station_groups sg 
+                    WHERE sg.station1 = pr.destination AND sg.station2 = t.origine
+                )
+            """
 
     query = f"""
         WITH RECURSIVE possible_routes AS (
@@ -287,18 +336,41 @@ def get_trip_connections(dates, origins, destinations):
                 pr.connection_count + 1 AS connection_count,
                 pr.first_leg_departure,
                 t.heure_arrivee AS last_leg_arrival,
-                CAST(pr.route_description || ' -> ' || t.destination AS TEXT)
-                    AS route_description,
+                CAST(
+                    CASE 
+                        WHEN t.origine = pr.destination THEN pr.route_description || ' -> ' || t.destination
+                        ELSE pr.route_description || ' -> ' || t.origine || ' -> ' || t.destination
+                    END AS TEXT
+                ) AS route_description,
                 CAST(pr.route_uid || '-' || t.uid AS TEXT) AS route_uid
             FROM TGVMAX t
             JOIN possible_routes pr
-              ON t.origine = pr.destination
-              AND t.heure_depart > pr.last_leg_arrival
+              ON (
+                -- Direct connection: t.origine = pr.destination
+                t.origine = pr.destination{station_group_condition}
+              )
+              AND (
+                -- For direct connections: just check departure time is after arrival
+                (t.origine = pr.destination AND t.heure_depart > pr.last_leg_arrival)
+                OR
+                -- For station group connections: check if there's enough time for the transfer
+                (t.origine != pr.destination AND 
+                 EXISTS (
+                   SELECT 1 FROM station_groups sg 
+                   WHERE sg.station1 = pr.destination AND sg.station2 = t.origine
+                 ) AND
+                 -- Calculate if there's enough time for the transfer
+                 (CAST(SUBSTR(t.heure_depart, 1, 2) AS INTEGER) * 60 + CAST(SUBSTR(t.heure_depart, 4, 2) AS INTEGER)) -
+                 (CAST(SUBSTR(pr.last_leg_arrival, 1, 2) AS INTEGER) * 60 + CAST(SUBSTR(pr.last_leg_arrival, 4, 2) AS INTEGER)) >= 
+                 (SELECT connection_time FROM station_groups sg 
+                  WHERE sg.station1 = pr.destination AND sg.station2 = t.origine LIMIT 1)
+                )
+              )
               AND t.date = pr.date
               AND t.DISPO = 'OUI'
               AND NOT t.axe = 'IC NUIT'
             WHERE pr.connection_count < :max_connections
-        )
+        ){station_groups_cte}
         -- Select only trips that end at the desired destination
         SELECT
             origine,
@@ -315,7 +387,7 @@ def get_trip_connections(dates, origins, destinations):
     """
 
     # Build the parameters dictionary
-    params = {'max_connections': 0}
+    params = {'max_connections': max_connections}
 
     # Add origins to params
     for i, origin in enumerate(origins):
@@ -336,39 +408,156 @@ def get_trip_connections(dates, origins, destinations):
     result = run_query(query, params=params)
     print(len(result))
 
-    # Increase max_connections until results are found or limit is reached
-    while len(result) == 0 and params['max_connections'] < 5:
-        print(params['max_connections'])
-        params['max_connections'] += 1
+    # Only increase max_connections if no results found and user didn't specify a limit
+    if len(result) == 0 and max_connections == 0:
+        params['max_connections'] = 1
         print(f"Increasing max connections to {params['max_connections']}")
         result = run_query(query, params=params)
+        
+        # Continue increasing until results found or limit reached
+        while len(result) == 0 and params['max_connections'] < 5:
+            params['max_connections'] += 1
+            print(f"Increasing max connections to {params['max_connections']}")
+            result = run_query(query, params=params)
 
     result_list = []
     for index, route in result.iterrows():
         trains = list(map(int, route['route_uid'].split('-')))
-        query = """
-        SELECT origine, heure_depart, destination, heure_arrivee, train_no
-        FROM TGVMAX
-        WHERE uid=:uid
-        """
-
         train_dic = {}
         train_dic['train_list'] = []
+        prev_station = None
         for index_train, train in enumerate(trains):
+            query = """
+            SELECT origine, heure_depart, destination, heure_arrivee, train_no
+            FROM TGVMAX
+            WHERE uid=:uid
+            """
             params = {"uid": train}
-            train_dic['train_list'].append(list(run_query(query, params=params).values[0]))
+            train_info = list(run_query(query, params=params).values[0])
+            # If this is not the first train, check for a group transfer
+            if prev_station is not None and train_info[0] != prev_station:
+                # Check if prev_station and train_info[0] are in the same group
+                if are_stations_in_same_group(prev_station, train_info[0]):
+                    # Get connection time for the warning message
+                    connection_time = get_station_connection_time(prev_station, train_info[0])
+                    # Insert a virtual connection with proper format and connection time
+                    virtual_leg = [prev_station, '', train_info[0], '', 'Correspondance', connection_time]
+                    train_dic['train_list'].append(virtual_leg)
+            train_dic['train_list'].append(train_info)
+            prev_station = train_info[2]  # destination
         train_dic['route_name'] = route['route_description']
         duration_td = datetime.strptime(route['last_leg_arrival'], '%H:%M') - datetime.strptime(route['first_leg_departure'], '%H:%M')
         train_dic['duration'] = format_duration(duration_td)
         train_dic['date'] = route['date']
         result_list.append(train_dic)
 
-    idx = np.argsort([result["duration"] for result in result_list])
-    result_list = [result_list[i] for i in idx]
+    # Sort results by duration (shortest first)
+    def duration_to_minutes(duration_str):
+        import re
+        hours = 0
+        minutes = 0
+        hour_match = re.search(r'(\d+)h', duration_str)
+        if hour_match:
+            hours = int(hour_match.group(1))
+        minute_match = re.search(r'(\d+)m', duration_str)
+        if minute_match:
+            minutes = int(minute_match.group(1))
+        return hours * 60 + minutes
+
+    result_list.sort(key=lambda result: duration_to_minutes(result["duration"]))
     return result_list
 
 
+import json
+import os
 
+# Load station groups from JSON file
+def load_station_groups():
+    """Load station groups from the JSON file."""
+    json_path = os.path.join(os.path.dirname(__file__), 'station_groups.json')
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"Warning: station_groups.json not found at {json_path}")
+        return []
+    except json.JSONDecodeError as e:
+        print(f"Error parsing station_groups.json: {e}")
+        return []
+
+# Load station groups
+STATION_GROUPS = load_station_groups()
+
+# Create a mapping from group names to station lists for quick lookup
+STATION_GROUP_MAPPING = {}
+for group in STATION_GROUPS:
+    stations = []
+    for station_data in group["stations"]:
+        if isinstance(station_data, list):
+            # New format: [station1, station2, connection_time]
+            stations.extend([station_data[0], station_data[1]])
+        else:
+            # Old format: just station name
+            stations.append(station_data)
+    STATION_GROUP_MAPPING[group["group"]] = list(set(stations))  # Remove duplicates
+
+# Create a reverse mapping from station to group for quick lookup
+STATION_TO_GROUP_MAPPING = {}
+for group in STATION_GROUPS:
+    for station_data in group["stations"]:
+        if isinstance(station_data, list):
+            # New format: [station1, station2, connection_time]
+            STATION_TO_GROUP_MAPPING[station_data[0]] = group["group"]
+            STATION_TO_GROUP_MAPPING[station_data[1]] = group["group"]
+        else:
+            # Old format: just station name
+            STATION_TO_GROUP_MAPPING[station_data] = group["group"]
+
+def get_station_group(station):
+    """Get the group name for a given station, or None if not in any group."""
+    return STATION_TO_GROUP_MAPPING.get(station)
+
+def are_stations_in_same_group(station1, station2):
+    """Check if two stations belong to the same group."""
+    group1 = get_station_group(station1)
+    group2 = get_station_group(station2)
+    return group1 is not None and group1 == group2
+
+def get_station_connection_time(station1, station2):
+    """Get the minimum connection time between two stations in the same group, or None if not in same group."""
+    if not are_stations_in_same_group(station1, station2):
+        return None
+    
+    group_name = get_station_group(station1)
+    for group in STATION_GROUPS:
+        if group["group"] == group_name:
+            for station_data in group["stations"]:
+                if isinstance(station_data, list):
+                    # New format: [station1, station2, connection_time]
+                    if (station_data[0] == station1 and station_data[1] == station2) or \
+                       (station_data[0] == station2 and station_data[1] == station1):
+                        return station_data[2]  # Return connection time in minutes
+    return None
+
+def expand_station_groups(cities_list):
+    """Expand station group names to the list of individual stations."""
+    if not cities_list:
+        return cities_list
+    
+    expanded_list = []
+    for city in cities_list:
+        if city in STATION_GROUP_MAPPING:
+            # Add all stations in the group
+            expanded_list.extend(STATION_GROUP_MAPPING[city])
+        else:
+            expanded_list.append(city)
+    
+    return expanded_list
+
+# Keep the old function for backward compatibility
+def expand_ile_de_france(cities_list):
+    """Expand 'ILE DE FRANCE' to the list of Île-de-France cities/stations."""
+    return expand_station_groups(cities_list)
 
 
 if __name__ == "__main__":
