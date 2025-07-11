@@ -304,6 +304,43 @@ def get_trip_connections(dates, origins, destinations, max_connections=0, allow_
         destination_placeholders = ', '.join([f':destination_{i}' for i in range(len(destinations))])
         destination_condition = f"destination IN ({destination_placeholders})"
 
+    # Build the parameters dictionary
+    params = {'max_connections': max_connections}
+
+    # Add origins to params
+    for i, origin in enumerate(origins):
+        params[f'origin_{i}'] = origin
+
+    # Add destinations to params
+    for i, destination in enumerate(destinations):
+        params[f'destination_{i}'] = destination
+
+    # Add dates to params
+    for i, date in enumerate(dates):
+        params[f'date_{i}'] = date
+
+    if max_connections == 0:
+        # ✂️  MUCH simpler query, no recursion at all
+        query = f"""
+            SELECT origine, destination, heure_depart AS first_leg_departure,
+                   heure_arrivee AS last_leg_arrival, uid
+            FROM   TGVMAX
+            WHERE  {origin_condition}
+              AND  {destination_condition}
+              AND  date IN ({date_placeholders})
+              AND  DISPO='OUI' AND axe!='IC NUIT'
+            ORDER  BY heure_depart;
+        """
+        result = run_query(query, params=params)
+        
+        # If no direct connections found, try with 1 connection
+        if len(result) == 0:
+            logger.info("No direct connections found, trying with 1 connection")
+            # Fall back to recursive query with max_connections = 1
+            return get_trip_connections(dates, origins, destinations, max_connections=1, allow_station_groups=allow_station_groups)
+        
+        return _post_process_direct_trips(result)
+
     # Create a CTE for station groups to allow connections within groups
     station_groups_cte = ""
     station_group_condition = ""
@@ -419,21 +456,6 @@ def get_trip_connections(dates, origins, destinations, max_connections=0, allow_
         ORDER BY connection_count, first_leg_departure, last_leg_arrival;
     """
 
-    # Build the parameters dictionary
-    params = {'max_connections': max_connections}
-
-    # Add origins to params
-    for i, origin in enumerate(origins):
-        params[f'origin_{i}'] = origin
-
-    # Add destinations to params
-    for i, destination in enumerate(destinations):
-        params[f'destination_{i}'] = destination
-
-    # Add dates to params
-    for i, date in enumerate(dates):
-        params[f'date_{i}'] = date
-
     # Preview the query (optional)
     preview_query(query, params)
 
@@ -457,6 +479,140 @@ def get_trip_connections(dates, origins, destinations, max_connections=0, allow_
                 params['max_connections'],
             )
             result = run_query(query, params=params)
+    elif len(result) == 0 and max_connections > 0:
+        # If we're already trying with connections but found none, try with more
+        params['max_connections'] = max_connections + 1
+        if params['max_connections'] <= 5:
+            logger.info(
+                "Augmentation du nombre maximum de connexions à %d",
+                params['max_connections'],
+            )
+            result = run_query(query, params=params)
+
+    # Process results for recursive queries
+    result_list = []
+    for index, route in result.iterrows():
+        trains = list(map(int, route['route_uid'].split('-')))
+        train_dic = {}
+        train_dic['train_list'] = []
+        prev_station = None
+        for index_train, train in enumerate(trains):
+            query = """
+            SELECT origine, heure_depart, destination, heure_arrivee, train_no
+            FROM TGVMAX
+            WHERE uid=:uid
+            """
+            params = {"uid": train}
+            train_info = list(run_query(query, params=params).values[0])
+            # Si ce n'est pas le premier train, vérifier s'il y a un transfert de groupe
+            if prev_station is not None and train_info[0] != prev_station:
+                # Vérifier si prev_station et train_info[0] sont dans le même groupe
+                if are_stations_in_same_group(prev_station, train_info[0]):
+                    # Obtenir le temps de connexion pour le message d'avertissement
+                    connection_time = get_station_connection_time(prev_station, train_info[0])
+                    # Insérer une connexion virtuelle avec le format approprié et le temps de connexion
+                    virtual_leg = [prev_station, '', train_info[0], '', 'Correspondance', connection_time]
+                    train_dic['train_list'].append(virtual_leg)
+            train_dic['train_list'].append(train_info)
+            prev_station = train_info[2]  # destination
+        train_dic['route_name'] = route['route_description']
+        
+        # Calculate total duration by considering all train segments and waiting times
+        total_duration = timedelta()
+        current_time = None
+        filtered_train_list = []
+        last_real_destination = None
+        for train_info in train_dic['train_list']:
+            if len(train_info) >= 5 and train_info[4] != 'Correspondance':
+                # Regular train segment
+                departure_str = train_info[1]
+                arrival_str = train_info[3]
+                if departure_str and arrival_str:
+                    departure_time = datetime.strptime(departure_str, '%H:%M')
+                    arrival_time = datetime.strptime(arrival_str, '%H:%M')
+                    # If this is not the first train, add waiting time between trains
+                    if current_time is not None:
+                        if departure_time < current_time:
+                            departure_time += timedelta(days=1)
+                        waiting_time = departure_time - current_time
+                        total_duration += waiting_time
+                    
+                    # Si ce segment arrive après minuit, on arrête l'itinéraire ici
+                    if arrival_time < departure_time:
+                        # On ajoute la durée complète jusqu'à l'arrivée réelle
+                        arrival_time += timedelta(days=1)
+                        train_duration = arrival_time - departure_time
+                        total_duration += train_duration
+                        filtered_train_list.append(list(train_info))
+                        last_real_destination = train_info[2]
+                        break
+                    # Add train travel time
+                    train_duration = arrival_time - departure_time
+                    total_duration += train_duration
+                    current_time = arrival_time
+                filtered_train_list.append(list(train_info))
+                last_real_destination = train_info[2]
+            else:
+                filtered_train_list.append(list(train_info))
+        # Vérifier que la dernière gare atteinte est bien la destination demandée
+        if last_real_destination is not None and last_real_destination != route['destination']:
+            continue  # Ne pas inclure cet itinéraire
+        train_dic['train_list'] = filtered_train_list
+        train_dic['duration'] = format_duration(total_duration)
+        train_dic['date'] = route['date']
+        result_list.append(train_dic)
+
+    # Sort results by duration (shortest first)
+    def duration_to_minutes(duration_str):
+        import re
+        hours = 0
+        minutes = 0
+        hour_match = re.search(r'(\d+)h', duration_str)
+        if hour_match:
+            hours = int(hour_match.group(1))
+        minute_match = re.search(r'(\d+)m', duration_str)
+        if minute_match:
+            minutes = int(minute_match.group(1))
+        return hours * 60 + minutes
+
+    result_list.sort(key=lambda result: duration_to_minutes(result["duration"]))
+    return result_list
+
+def _post_process_direct_trips(result):
+    """Post-process direct trip results (no connections)"""
+    result_list = []
+    for index, route in result.iterrows():
+        train_dic = {}
+        train_dic['train_list'] = []
+        
+        # Get train details
+        query = """
+        SELECT origine, heure_depart, destination, heure_arrivee, train_no
+        FROM TGVMAX
+        WHERE uid=:uid
+        """
+        params = {"uid": route['uid']}
+        train_info = list(run_query(query, params=params).values[0])
+        train_dic['train_list'].append(train_info)
+        
+        # Calculate duration
+        departure_str = train_info[1]
+        arrival_str = train_info[3]
+        if departure_str and arrival_str:
+            departure_time = datetime.strptime(departure_str, '%H:%M')
+            arrival_time = datetime.strptime(arrival_str, '%H:%M')
+            if arrival_time < departure_time:
+                arrival_time += timedelta(days=1)
+            train_duration = arrival_time - departure_time
+            train_dic['duration'] = format_duration(train_duration)
+        else:
+            train_dic['duration'] = '0m'
+        
+        train_dic['route_name'] = f"{route['origine']} -> {route['destination']}"
+        train_dic['date'] = route.get('date', '')
+        result_list.append(train_dic)
+    
+    return result_list
 
     result_list = []
     for index, route in result.iterrows():
