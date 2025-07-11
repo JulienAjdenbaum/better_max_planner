@@ -375,7 +375,15 @@ def get_trip_connections(dates, origins, destinations, max_connections=0, allow_
             """
 
     query = f"""
-        WITH RECURSIVE possible_routes AS (
+        WITH RECURSIVE filtered AS (
+            SELECT *
+            FROM TGVMAX
+            WHERE date IN ({date_placeholders}) 
+              AND DISPO = 'OUI' 
+              AND axe != 'IC NUIT'
+              AND ({origin_condition} OR {destination_condition})
+        ),
+        possible_routes AS (
             -- Base case: Direct trips
             SELECT
                 origine,
@@ -388,11 +396,8 @@ def get_trip_connections(dates, origins, destinations, max_connections=0, allow_
                 heure_arrivee AS last_leg_arrival,
                 CAST(origine || ' -> ' || destination AS TEXT) AS route_description,
                 CAST(uid AS TEXT) AS route_uid
-            FROM TGVMAX
+            FROM filtered
             WHERE {origin_condition}
-              AND date IN ({date_placeholders})
-              AND DISPO = 'OUI'
-              AND NOT axe = 'IC NUIT'
 
             UNION ALL
 
@@ -413,7 +418,7 @@ def get_trip_connections(dates, origins, destinations, max_connections=0, allow_
                     END AS TEXT
                 ) AS route_description,
                 CAST(pr.route_uid || '-' || t.uid AS TEXT) AS route_uid
-            FROM TGVMAX t
+            FROM filtered t
             JOIN possible_routes pr
               ON (
                 -- Direct connection: t.origine = pr.destination
@@ -437,8 +442,6 @@ def get_trip_connections(dates, origins, destinations, max_connections=0, allow_
                 )
               )
               AND t.date = pr.date
-              AND t.DISPO = 'OUI'
-              AND NOT t.axe = 'IC NUIT'
             WHERE pr.connection_count < :max_connections
         ){station_groups_cte}
         -- Select only trips that end at the desired destination
