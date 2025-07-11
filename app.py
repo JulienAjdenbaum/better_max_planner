@@ -158,7 +158,7 @@ def get_trip_connections_endpoint():
 
     # Validate input
     if not (start_date and end_date and origin and destination):
-        return jsonify({'success': False, 'error': 'Missing required parameters.'}), 400
+        return jsonify({'success': False, 'error': 'Paramètres requis manquants.'}), 400
 
     # Ensure origin and destination are always flat lists of strings
     if isinstance(origin, str):

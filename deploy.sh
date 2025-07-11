@@ -1,22 +1,22 @@
 #!/bin/bash
 
-# TGV Max Planner Docker Deployment Script
+# Script de Déploiement Docker du Planificateur TGV Max
 
-echo "🚄 Building TGV Max Planner Docker image..."
+echo "🚄 Construction de l'image Docker du Planificateur TGV Max..."
 
-# Build the Docker image
+# Construire l'image Docker
 docker build -t tgvmax-planner .
 
 if [ $? -eq 0 ]; then
-    echo "✅ Docker image built successfully!"
+    echo "✅ Image Docker construite avec succès !"
     
-    echo "🚀 Starting TGV Max Planner container..."
+    echo "🚀 Démarrage du conteneur Planificateur TGV Max..."
     
-    # Stop existing container if running
+    # Arrêter le conteneur existant s'il fonctionne
     docker stop tgvmax-planner 2>/dev/null || true
     docker rm tgvmax-planner 2>/dev/null || true
     
-    # Run the container
+    # Exécuter le conteneur
     docker run -d \
         --name tgvmax-planner \
         -p 5000:5000 \
@@ -25,16 +25,16 @@ if [ $? -eq 0 ]; then
         tgvmax-planner
     
     if [ $? -eq 0 ]; then
-        echo "✅ TGV Max Planner is now running!"
-        echo "🌐 Access the application at: http://localhost:5000"
+        echo "✅ Le Planificateur TGV Max fonctionne maintenant !"
+        echo "🌐 Accédez à l'application à : http://localhost:5000"
         echo ""
-        echo "📊 Container status:"
+        echo "📊 Statut du conteneur :"
         docker ps --filter name=tgvmax-planner
     else
-        echo "❌ Failed to start container"
+        echo "❌ Échec du démarrage du conteneur"
         exit 1
     fi
 else
-    echo "❌ Failed to build Docker image"
+    echo "❌ Échec de la construction de l'image Docker"
     exit 1
 fi 
