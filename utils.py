@@ -2,6 +2,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 import requests
 from io import StringIO
+import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
 import numpy as np
@@ -11,6 +12,7 @@ import time
 # from app import destination
 
 engine = create_engine('sqlite:///tgvmax.db')
+logger = logging.getLogger(__name__)
 
 def format_duration(td):
     total_minutes = int(td.total_seconds() // 60)
@@ -30,7 +32,7 @@ def format_duration(td):
             return f"{hours}h{minutes}m"
 
 def scheduled_task():
-    print("Tâche effectuée")
+    logger.info("Tâche effectuée")
 
 def test_app_scheduler():
     scheduler = BackgroundScheduler()
@@ -40,25 +42,28 @@ def test_app_scheduler():
 def update_db(engine):
     # URL to download the CSV file
     url = "https://ressources.data.sncf.com/api/explore/v2.1/catalog/datasets/tgvmax/exports/csv"
-    print("Début du téléchargement des données")
+    logger.info("Début du téléchargement des données")
     # Send the GET request to download the file
     response = requests.get(url)
 
     # Check if the request was successful
     if response.status_code == 200:
         csv_data = StringIO(response.text)
-        print("Données reçues, traitement en cours")
+        logger.info("Données reçues, traitement en cours")
         new_data_df = pd.read_csv(csv_data, sep=";")
         new_data_df.rename(columns={"od_happy_card": "DISPO"}, inplace=True)
         new_data_df["UID"] = new_data_df.index
         new_data_df.to_sql('TGVMAX', con=engine, index=False, if_exists='replace')
-        print("Mise à jour des données terminée")
+        logger.info("Mise à jour des données terminée")
     else:
-        print(f"Échec du téléchargement du fichier. Code de statut : {response.status_code}")
-        print(response.text)
+        logger.error(
+            "Échec du téléchargement du fichier. Code de statut : %s", response.status_code
+        )
+        logger.error(response.text)
 
 
 def run_query(query, params=None, engine=engine, as_list=False):
+    logger.debug("Running query: %s params=%s", query.strip(), params)
     with engine.connect() as connection:
         result = connection.execute(text(query), params or {})
         if as_list:
@@ -95,7 +100,7 @@ def find_optimal_trips(station, dates):
     date1 = datetime.strptime(dates[0], '%Y-%m-%d')
     date2 = datetime.strptime(dates[1], '%Y-%m-%d')
     n_jours = (date2 - date1).days
-    print(f"Nombre de jours : {n_jours}")
+    logger.debug("Nombre de jours : %s", n_jours)
     # query = """
     # SELECT distinct aller.destination
 
@@ -137,19 +142,23 @@ def find_optimal_destinations(station, dates):
         # Single date provided - use same date for outbound and return
         date1 = datetime.strptime(dates, '%Y-%m-%d')
         date2 = date1
-        print(f"Planification d'un voyage à la journée le {dates}")
+        logger.info("Planification d'un voyage à la journée le %s", dates)
     else:
         # Date pair provided
         date1 = datetime.strptime(dates[0], '%Y-%m-%d')
         date2 = datetime.strptime(dates[1], '%Y-%m-%d')
         n_jours = (date2 - date1).days
-        print(f"Planification d'un voyage de {n_jours} jours")
+        logger.info("Planification d'un voyage de %s jours", n_jours)
     
     # Check if the station is a group name and expand it
     if station in STATION_GROUP_MAPPING:
         # This is a station group, get all individual stations
         individual_stations = STATION_GROUP_MAPPING[station]
-        print(f"Extension du groupe de gares '{station}' vers {len(individual_stations)} gares individuelles")
+        logger.info(
+            "Extension du groupe de gares '%s' vers %d gares individuelles",
+            station,
+            len(individual_stations),
+        )
         
         # Get trips from all stations in the group
         all_trips = []
@@ -265,7 +274,7 @@ def preview_query(query, params):
         else:
             value = str(value)
         formatted_query = formatted_query.replace(placeholder, value)
-    print(f"Requête formatée : {formatted_query}")
+    logger.debug("Requête formatée : %s", formatted_query)
 
 
 def get_trip_connections(dates, origins, destinations, max_connections=0, allow_station_groups=True):
@@ -430,18 +439,23 @@ def get_trip_connections(dates, origins, destinations, max_connections=0, allow_
 
     # Run the query
     result = run_query(query, params=params)
-    print(f"Nombre de résultats trouvés : {len(result)}")
+    logger.info("Nombre de résultats trouvés : %d", len(result))
 
     # Only increase max_connections if no results found and user didn't specify a limit
     if len(result) == 0 and max_connections == 0:
         params['max_connections'] = 1
-        print(f"Augmentation du nombre maximum de connexions à {params['max_connections']}")
+        logger.info(
+            "Augmentation du nombre maximum de connexions à %d", params['max_connections']
+        )
         result = run_query(query, params=params)
         
         # Continue increasing until results found or limit reached
         while len(result) == 0 and params['max_connections'] < 5:
             params['max_connections'] += 1
-            print(f"Augmentation du nombre maximum de connexions à {params['max_connections']}")
+            logger.info(
+                "Augmentation du nombre maximum de connexions à %d",
+                params['max_connections'],
+            )
             result = run_query(query, params=params)
 
     result_list = []
@@ -544,10 +558,10 @@ def load_station_groups():
         with open(json_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
-        print(f"Avertissement : station_groups.json introuvable à {json_path}")
+        logger.warning("Avertissement : station_groups.json introuvable à %s", json_path)
         return []
     except json.JSONDecodeError as e:
-        print(f"Erreur lors de l'analyse de station_groups.json : {e}")
+        logger.error("Erreur lors de l'analyse de station_groups.json : %s", e)
         return []
 
 # Load station groups
