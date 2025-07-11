@@ -1,0 +1,83 @@
+[
+  {
+    "group": "ILE DE FRANCE (toutes gares)",
+    "stations": [
+      ["PARIS (intramuros)", "AEROPORT ROISSY CDG 2 TGV", 60],
+      ["PARIS (intramuros)", "MARNE LA VALLEE CHESSY", 50],
+      ["PARIS (intramuros)", "MASSY TGV", 45],
+      ["PARIS (intramuros)", "MASSY PALAISEAU", 45],
+      ["PARIS (intramuros)", "VERSAILLES CHANTIERS", 40],
+      ["PARIS (intramuros)", "JUVISY", 40],
+      ["PARIS (intramuros)", "MANTES LA JOLIE", 60],
+      ["AEROPORT ROISSY CDG 2 TGV", "MARNE LA VALLEE CHESSY", 40],
+      ["AEROPORT ROISSY CDG 2 TGV", "MASSY TGV", 75],
+      ["AEROPORT ROISSY CDG 2 TGV", "MASSY PALAISEAU", 75],
+      ["AEROPORT ROISSY CDG 2 TGV", "VERSAILLES CHANTIERS", 80],
+      ["AEROPORT ROISSY CDG 2 TGV", "JUVISY", 60],
+      ["AEROPORT ROISSY CDG 2 TGV", "MANTES LA JOLIE", 90],
+      ["MARNE LA VALLEE CHESSY", "MASSY TGV", 60],
+      ["MARNE LA VALLEE CHESSY", "MASSY PALAISEAU", 60],
+      ["MARNE LA VALLEE CHESSY", "VERSAILLES CHANTIERS", 70],
+      ["MARNE LA VALLEE CHESSY", "JUVISY", 50],
+      ["MARNE LA VALLEE CHESSY", "MANTES LA JOLIE", 80],
+      ["MASSY TGV", "MASSY PALAISEAU", 5],
+      ["MASSY TGV", "VERSAILLES CHANTIERS", 30],
+      ["MASSY TGV", "JUVISY", 25],
+      ["MASSY TGV", "MANTES LA JOLIE", 60],
+      ["MASSY PALAISEAU", "VERSAILLES CHANTIERS", 30],
+      ["MASSY PALAISEAU", "JUVISY", 25],
+      ["MASSY PALAISEAU", "MANTES LA JOLIE", 60],
+      ["VERSAILLES CHANTIERS", "JUVISY", 35],
+      ["VERSAILLES CHANTIERS", "MANTES LA JOLIE", 50],
+      ["JUVISY", "MANTES LA JOLIE", 60]
+    ]
+  },
+  {
+    "group": "AVIGNON (centre + TGV)",
+    "stations": [
+      ["AVIGNON TGV", "AVIGNON CENTRE", 15]
+    ]
+  },
+  {
+    "group": "MARSEILLE (toutes gares)",
+    "stations": [
+      ["MARSEILLE ST CHARLES", "MARSEILLE BLANCARDE", 10]
+    ]
+  },
+  {
+    "group": "MONTPELLIER (toutes gares)",
+    "stations": [
+      ["MONTPELLIER SAINT ROCH", "MONTPELLIER SUD DE FRANCE", 25]
+    ]
+  },
+  {
+    "group": "NIMES (centre + TGV)",
+    "stations": [
+      ["NIMES CENTRE", "NIMES PONT DU GARD", 30]
+    ]
+  },
+  {
+    "group": "LYON (centre + aéroport)",
+    "stations": [
+      ["LYON (intramuros)", "LYON ST EXUPERY TGV.", 35]
+    ]
+  },
+  {
+    "group": "VALENCE (ville + TGV)",
+    "stations": [
+      ["VALENCE VILLE", "VALENCE TGV", 20]
+    ]
+  },
+  {
+    "group": "METZ - LORRAINE TGV",
+    "stations": [
+      ["METZ VILLE", "LORRAINE TGV", 40]
+    ]
+  },
+  {
+    "group": "NANCY - LORRAINE TGV",
+    "stations": [
+      ["NANCY", "LORRAINE TGV", 50]
+    ]
+  }
+] 
