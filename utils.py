@@ -140,6 +140,28 @@ def find_optimal_destinations(station, dates):
         n_jours = (date2 - date1).days
         print(f"Planning trip for {n_jours} days")
     
+    # Check if the station is a group name and expand it
+    if station in STATION_GROUP_MAPPING:
+        # This is a station group, get all individual stations
+        individual_stations = STATION_GROUP_MAPPING[station]
+        print(f"Expanding station group '{station}' to {len(individual_stations)} individual stations")
+        
+        # Get trips from all stations in the group
+        all_trips = []
+        for individual_station in individual_stations:
+            station_trips = find_optimal_destinations_single_station(individual_station, date1, date2)
+            all_trips.extend(station_trips)
+        
+        # Sort by time at destination (descending)
+        all_trips.sort(key=lambda x: x['time_at_destination_minutes'], reverse=True)
+        return all_trips
+    else:
+        # This is an individual station
+        return find_optimal_destinations_single_station(station, date1, date2)
+
+
+def find_optimal_destinations_single_station(station, date1, date2):
+    """Find optimal destinations for round trips from a single station on specified dates."""
     query = """
     SELECT 
         aller.destination,
@@ -223,9 +245,6 @@ def find_optimal_destinations(station, dates):
             'time_at_destination': format_duration(time_at_destination),
             'time_at_destination_minutes': time_at_destination.total_seconds() / 60
         })
-    
-    # Sort by time at destination (descending)
-    trips_data.sort(key=lambda x: x['time_at_destination_minutes'], reverse=True)
     
     return trips_data
 

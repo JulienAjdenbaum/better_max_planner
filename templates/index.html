@@ -559,17 +559,25 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="stationSelect">Departure Station:</label>
-                <div class="searchable-select">
-                    <input type="text" id="stationSearch" placeholder="PARIS (intramuros)" autocomplete="off">
-                    <div class="dropdown-options" id="stationOptions" style="display: none;">
-                        <div class="option" data-value="PARIS (intramuros)">PARIS (intramuros)</div>
-                        {% for destination in destinations %}
-                        <div class="option" data-value="{{ destination }}">{{ destination }}</div>
-                        {% endfor %}
-                    </div>
-                    <input type="hidden" id="stationSelect" value="PARIS (intramuros)">
-                </div>
+                <label for="dayTripStationSelect">Departure Station(s):</label>
+                <select id="dayTripStationSelect" multiple>
+                    <!-- ILE DE FRANCE first (forced to top) -->
+                    <option value="ILE DE FRANCE (toutes gares)">ILE DE FRANCE (toutes gares)</option>
+                    <!-- PARIS (intramuros) second -->
+                    <option value="PARIS (intramuros)">PARIS (intramuros)</option>
+                    <!-- Other station groups (alphabetical order) -->
+                    {% for group in station_groups %}
+                    {% if group.group != "ILE DE FRANCE (toutes gares)" and group.group != "PARIS (intramuros)" %}
+                    <option value="{{ group.group }}">{{ group.group }}</option>
+                    {% endif %}
+                    {% endfor %}
+                    <!-- Individual stations (alphabetical order, excluding PARIS) -->
+                    {% for destination in destinations %}
+                    {% if destination != "PARIS (intramuros)" and destination != "ILE DE FRANCE (toutes gares)" %}
+                    <option value="{{ destination }}">{{ destination }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
             </div>
                 <button class="btn" onclick="findDestinations()">Find day trip destinations</button>
         </div>
@@ -637,7 +645,7 @@
                     </select>
                 </div>
 
-                <button class="btn" id="findConnectionsBtn" onclick="findConnections()">Find Connections</button>
+                <button class="btn" id="findConnectionsBtn" onclick="findConnections()">Find Routes</button>
             </div>
             <div class="results" id="connectionsResults">
                 <div class="loading" id="connectionsLoading" style="display: none;">
@@ -652,12 +660,15 @@
     <script>
         async function findDestinations() {
             const dateInput = document.getElementById('dayTripDateInput');
-            const stationSelect = document.getElementById('stationSelect');
+            const stationSelect = document.getElementById('dayTripStationSelect');
             const loading = document.getElementById('loading');
             const error = document.getElementById('error');
             const tripsContainer = document.getElementById('tripsContainer');
             const btn = document.querySelector('.btn');
 
+            // Get selected stations
+            const selectedStations = Array.from(stationSelect.selectedOptions).map(opt => opt.value);
+            
             // Show loading
             loading.style.display = 'block';
             error.style.display = 'none';
@@ -672,7 +683,7 @@
                     },
                     body: JSON.stringify({
                         date: dateInput.value,
-                        station: stationSelect.value
+                        stations: selectedStations
                     })
                 });
 
@@ -988,8 +999,13 @@
             new Choices('#originSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Select origins...', shouldSort: false });
             new Choices('#destinationSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Select destinations...', shouldSort: false });
             
-            // Setup dropdown for tab 1 (single-select departure station)
-            setupSearchableDropdown('stationSearch', 'stationOptions', 'stationSelect', false);
+            // Initialize day trip station select with PARIS as default
+            const dayTripChoices = new Choices('#dayTripStationSelect', { 
+                removeItemButton: true, 
+                placeholder: true, 
+                placeholderValue: 'PARIS (intramuros)', 
+                shouldSort: false 
+            });
         });
     </script>
 </body>

@@ -20,20 +20,35 @@ def index():
     # Get all destinations from database
     all_destinations = utils.get_all_towns()
     
-    return render_template('index.html', dates=dates, destinations=all_destinations)
+    # Get station groups for the template
+    station_groups = utils.STATION_GROUPS
+    
+    return render_template('index.html', dates=dates, destinations=all_destinations, station_groups=station_groups)
 
 @app.route('/get_destinations', methods=['POST'])
 def get_destinations():
     data = request.get_json()
     selected_date = data.get('date')
-    station = data.get('station', 'PARIS (intramuros)')
+    stations = data.get('stations', ['PARIS (intramuros)'])
+    
+    # Handle both single station (backward compatibility) and multiple stations
+    if isinstance(stations, str):
+        stations = [stations]
+    
+    # If no stations provided or empty array, default to PARIS
+    if not stations:
+        stations = ['PARIS (intramuros)']
     
     try:
-        trips = utils.find_optimal_destinations(station, selected_date)
+        # Get trips from all selected stations
+        all_trips = []
+        for station in stations:
+            station_trips = utils.find_optimal_destinations(station, selected_date)
+            all_trips.extend(station_trips)
         
         # Group trips by destination
         grouped_trips = {}
-        for trip in trips:
+        for trip in all_trips:
             dest = trip['destination']
             if dest not in grouped_trips:
                 grouped_trips[dest] = {
