@@ -14,6 +14,11 @@ engine = create_engine('sqlite:///tgvmax.db')
 
 def format_duration(td):
     total_minutes = int(td.total_seconds() // 60)
+    
+    # Handle negative durations (should not happen in normal cases)
+    if total_minutes < 0:
+        return "0m"  # Return 0 minutes for invalid durations
+    
     if total_minutes < 60:
         return f"{total_minutes}m"
     else:
@@ -465,8 +470,49 @@ def get_trip_connections(dates, origins, destinations, max_connections=0, allow_
             train_dic['train_list'].append(train_info)
             prev_station = train_info[2]  # destination
         train_dic['route_name'] = route['route_description']
-        duration_td = datetime.strptime(route['last_leg_arrival'], '%H:%M') - datetime.strptime(route['first_leg_departure'], '%H:%M')
-        train_dic['duration'] = format_duration(duration_td)
+        
+        # Calculate total duration by considering all train segments and waiting times
+        total_duration = timedelta()
+        current_time = None
+        filtered_train_list = []
+        last_real_destination = None
+        for train_info in train_dic['train_list']:
+            if len(train_info) >= 5 and train_info[4] != 'Correspondance':
+                # Regular train segment
+                departure_str = train_info[1]
+                arrival_str = train_info[3]
+                if departure_str and arrival_str:
+                    departure_time = datetime.strptime(departure_str, '%H:%M')
+                    arrival_time = datetime.strptime(arrival_str, '%H:%M')
+                    # If this is not the first train, add waiting time between trains
+                    if current_time is not None:
+                        if departure_time < current_time:
+                            departure_time += timedelta(days=1)
+                        waiting_time = departure_time - current_time
+                        total_duration += waiting_time
+                    
+                    # Si ce segment arrive après minuit, on arrête l'itinéraire ici
+                    if arrival_time < departure_time:
+                        # On ajoute la durée complète jusqu'à l'arrivée réelle
+                        arrival_time += timedelta(days=1)
+                        train_duration = arrival_time - departure_time
+                        total_duration += train_duration
+                        filtered_train_list.append(list(train_info))
+                        last_real_destination = train_info[2]
+                        break
+                    # Add train travel time
+                    train_duration = arrival_time - departure_time
+                    total_duration += train_duration
+                    current_time = arrival_time
+                filtered_train_list.append(list(train_info))
+                last_real_destination = train_info[2]
+            else:
+                filtered_train_list.append(list(train_info))
+        # Vérifier que la dernière gare atteinte est bien la destination demandée
+        if last_real_destination is not None and last_real_destination != route['destination']:
+            continue  # Ne pas inclure cet itinéraire
+        train_dic['train_list'] = filtered_train_list
+        train_dic['duration'] = format_duration(total_duration)
         train_dic['date'] = route['date']
         result_list.append(train_dic)
 
