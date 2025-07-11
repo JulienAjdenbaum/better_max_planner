@@ -11,3 +11,4 @@ logs/
 # Test and debug files
 test_*.py
 debug_*.py
+tgvmax.db
