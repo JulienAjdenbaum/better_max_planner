@@ -800,8 +800,18 @@
             const optionsContainer = document.getElementById(optionsContainerId);
             const hiddenInput = document.getElementById(hiddenInputId);
             const options = optionsContainer.querySelectorAll('.option');
-            searchInput.value = '';
-            searchInput.placeholder = 'Type to search...';
+            
+            // Set default value for departure station (tab 1)
+            if (searchInputId === 'stationSearch') {
+                searchInput.placeholder = 'PARIS (intramuros)';
+                hiddenInput.value = 'PARIS (intramuros)';
+            } else {
+                // For other dropdowns, clear value and set placeholder
+                if (!searchInput.value) {
+                    searchInput.value = '';
+                    searchInput.placeholder = 'Type to search...';
+                }
+            }
             searchInput.addEventListener('focus', function() {
                 optionsContainer.style.display = 'block';
                 filterOptions();
@@ -848,7 +858,12 @@
                     searchInput.value = text;
                     hiddenInput.value = value;
                     optionsContainer.style.display = 'none';
+                    // For departure station, keep the original placeholder behavior
+                    if (searchInputId === 'stationSearch') {
+                        searchInput.placeholder = 'PARIS (intramuros)';
+                    } else {
                         searchInput.placeholder = text + ' - Type to search...';
+                    }
                 });
             });
             }
@@ -920,7 +935,7 @@
                         html += `<li>${train[0]} → ${train[2]} <span class='train-number'>Hors TGV MAX</span></li>`;
                         // Add orange warning below the connection with actual connection time (no bullet point)
                         const connectionTime = train[5] || 15; // Default to 15 minutes if not provided
-                        html += `<div style="color: #f57c00; font-size: 0.9em; font-style: italic; margin-left: 20px; margin-bottom: 8px;">⚠️ Attention correspondance entre ${train[0]} et ${train[2]} non incluse dans TGV MAX. Prévoir au moins ${connectionTime} minutes.</div>`;
+                        html += `<div style="color: #f57c00; font-size: 0.9em; font-style: italic; margin-left: 20px; margin-bottom: 8px;">⚠️ Attention correspondance entre ${train[0]} et ${train[2]} non incluse dans TGV MAX. Renseignez-vous et prévoyez au moins ${connectionTime} minutes.</div>`;
                     } else {
                         // Regular train - show with times and train number
                         html += `<li>${train[0]} (${train[1]}) → ${train[2]} (${train[3]}) <span class='train-number'>Train ${train[4]}</span></li>`;
@@ -972,6 +987,9 @@
             // Initialize Choices.js for multi-selects
             new Choices('#originSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Select origins...', shouldSort: false });
             new Choices('#destinationSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Select destinations...', shouldSort: false });
+            
+            // Setup dropdown for tab 1 (single-select departure station)
+            setupSearchableDropdown('stationSearch', 'stationOptions', 'stationSelect', false);
         });
     </script>
 </body>
