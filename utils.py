@@ -25,7 +25,7 @@ def format_duration(td):
             return f"{hours}h{minutes}m"
 
 def scheduled_task():
-    print("Did task")
+    print("Tâche effectuée")
 
 def test_app_scheduler():
     scheduler = BackgroundScheduler()
@@ -35,21 +35,21 @@ def test_app_scheduler():
 def update_db(engine):
     # URL to download the CSV file
     url = "https://ressources.data.sncf.com/api/explore/v2.1/catalog/datasets/tgvmax/exports/csv"
-    print("Starting data download")
+    print("Début du téléchargement des données")
     # Send the GET request to download the file
     response = requests.get(url)
 
     # Check if the request was successful
     if response.status_code == 200:
         csv_data = StringIO(response.text)
-        print("Data has been received, processing it")
+        print("Données reçues, traitement en cours")
         new_data_df = pd.read_csv(csv_data, sep=";")
         new_data_df.rename(columns={"od_happy_card": "DISPO"}, inplace=True)
         new_data_df["UID"] = new_data_df.index
         new_data_df.to_sql('TGVMAX', con=engine, index=False, if_exists='replace')
-        print("Data update done")
+        print("Mise à jour des données terminée")
     else:
-        print(f"Failed to download the file. Status code: {response.status_code}")
+        print(f"Échec du téléchargement du fichier. Code de statut : {response.status_code}")
         print(response.text)
 
 
@@ -90,7 +90,7 @@ def find_optimal_trips(station, dates):
     date1 = datetime.strptime(dates[0], '%Y-%m-%d')
     date2 = datetime.strptime(dates[1], '%Y-%m-%d')
     n_jours = (date2 - date1).days
-    print(n_jours)
+    print(f"Nombre de jours : {n_jours}")
     # query = """
     # SELECT distinct aller.destination
 
@@ -132,19 +132,19 @@ def find_optimal_destinations(station, dates):
         # Single date provided - use same date for outbound and return
         date1 = datetime.strptime(dates, '%Y-%m-%d')
         date2 = date1
-        print(f"Planning day trip on {dates}")
+        print(f"Planification d'un voyage à la journée le {dates}")
     else:
         # Date pair provided
         date1 = datetime.strptime(dates[0], '%Y-%m-%d')
         date2 = datetime.strptime(dates[1], '%Y-%m-%d')
         n_jours = (date2 - date1).days
-        print(f"Planning trip for {n_jours} days")
+        print(f"Planification d'un voyage de {n_jours} jours")
     
     # Check if the station is a group name and expand it
     if station in STATION_GROUP_MAPPING:
         # This is a station group, get all individual stations
         individual_stations = STATION_GROUP_MAPPING[station]
-        print(f"Expanding station group '{station}' to {len(individual_stations)} individual stations")
+        print(f"Extension du groupe de gares '{station}' vers {len(individual_stations)} gares individuelles")
         
         # Get trips from all stations in the group
         all_trips = []
@@ -260,7 +260,7 @@ def preview_query(query, params):
         else:
             value = str(value)
         formatted_query = formatted_query.replace(placeholder, value)
-    print(formatted_query)
+    print(f"Requête formatée : {formatted_query}")
 
 
 def get_trip_connections(dates, origins, destinations, max_connections=0, allow_station_groups=True):
@@ -425,18 +425,18 @@ def get_trip_connections(dates, origins, destinations, max_connections=0, allow_
 
     # Run the query
     result = run_query(query, params=params)
-    print(len(result))
+    print(f"Nombre de résultats trouvés : {len(result)}")
 
     # Only increase max_connections if no results found and user didn't specify a limit
     if len(result) == 0 and max_connections == 0:
         params['max_connections'] = 1
-        print(f"Increasing max connections to {params['max_connections']}")
+        print(f"Augmentation du nombre maximum de connexions à {params['max_connections']}")
         result = run_query(query, params=params)
         
         # Continue increasing until results found or limit reached
         while len(result) == 0 and params['max_connections'] < 5:
             params['max_connections'] += 1
-            print(f"Increasing max connections to {params['max_connections']}")
+            print(f"Augmentation du nombre maximum de connexions à {params['max_connections']}")
             result = run_query(query, params=params)
 
     result_list = []
@@ -453,13 +453,13 @@ def get_trip_connections(dates, origins, destinations, max_connections=0, allow_
             """
             params = {"uid": train}
             train_info = list(run_query(query, params=params).values[0])
-            # If this is not the first train, check for a group transfer
+            # Si ce n'est pas le premier train, vérifier s'il y a un transfert de groupe
             if prev_station is not None and train_info[0] != prev_station:
-                # Check if prev_station and train_info[0] are in the same group
+                # Vérifier si prev_station et train_info[0] sont dans le même groupe
                 if are_stations_in_same_group(prev_station, train_info[0]):
-                    # Get connection time for the warning message
+                    # Obtenir le temps de connexion pour le message d'avertissement
                     connection_time = get_station_connection_time(prev_station, train_info[0])
-                    # Insert a virtual connection with proper format and connection time
+                    # Insérer une connexion virtuelle avec le format approprié et le temps de connexion
                     virtual_leg = [prev_station, '', train_info[0], '', 'Correspondance', connection_time]
                     train_dic['train_list'].append(virtual_leg)
             train_dic['train_list'].append(train_info)
@@ -498,10 +498,10 @@ def load_station_groups():
         with open(json_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
-        print(f"Warning: station_groups.json not found at {json_path}")
+        print(f"Avertissement : station_groups.json introuvable à {json_path}")
         return []
     except json.JSONDecodeError as e:
-        print(f"Error parsing station_groups.json: {e}")
+        print(f"Erreur lors de l'analyse de station_groups.json : {e}")
         return []
 
 # Load station groups
@@ -600,12 +600,12 @@ if __name__ == "__main__":
     
     if trips:
         print(f"\n{'='*100}")
-        print(f"OPTIMAL DESTINATIONS FROM {origins[0].upper()} ON {dates}")
+        print(f"DESTINATIONS OPTIMALES DEPUIS {origins[0].upper()} LE {dates}")
         print(f"{'='*100}")
         
         # Create table header with better spacing
-        print(f"{'Destination':<25} {'Outbound':<20} {'Return':<20} {'Total Travel':<15} {'Time at Dest':<15}")
-        print(f"{'':<25} {'Depart-Arrive':<20} {'Depart-Arrive':<20} {'Time':<15} {'(hrs:min)':<15}")
+        print(f"{'Destination':<25} {'Aller':<20} {'Retour':<20} {'Temps Total':<15} {'Temps à Dest':<15}")
+        print(f"{'':<25} {'Départ-Arrivée':<20} {'Départ-Arrivée':<20} {'Voyage':<15} {'(h:min)':<15}")
         print("-" * 100)
         
         for trip in trips:
@@ -621,8 +621,8 @@ if __name__ == "__main__":
                   f"{trip['time_at_destination']:<15}")
         
         print(f"{'='*100}")
-        print(f"Found {len(trips)} optimal destinations")
+        print(f"Trouvé {len(trips)} destination(s) optimale(s)")
     else:
-        print("No optimal destinations found for the given criteria.")
+        print("Aucune destination optimale trouvée pour les critères donnés.")
     
     # print(get_trip_connections(dates, origins, destinations))
