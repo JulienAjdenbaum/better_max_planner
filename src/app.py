@@ -1,15 +1,36 @@
 from flask import Flask, render_template, request, jsonify
 from datetime import datetime, timedelta
 import logging
-import utils
+from src import utils
 import os
 import time
-from logging_config import setup_logging
+from src.logging_config import setup_logging
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder=os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates'))
+
+# Configure Flask to trust proxy headers
+app.config['PREFERRED_URL_SCHEME'] = 'https'
+# Trust the proxy headers (nginx is on localhost, so we can trust it)
+app.config['PROXY_FIX'] = 1
+
+def get_client_ip():
+    """Get the real client IP address, handling proxy headers"""
+    # Check for X-Forwarded-For header first
+    if request.headers.get('X-Forwarded-For'):
+        # X-Forwarded-For can contain multiple IPs, take the first one
+        forwarded_for = request.headers.get('X-Forwarded-For').split(',')[0].strip()
+        if forwarded_for:
+            return forwarded_for
+    
+    # Fall back to X-Real-IP header
+    if request.headers.get('X-Real-IP'):
+        return request.headers.get('X-Real-IP')
+    
+    # Finally fall back to remote_addr
+    return request.remote_addr
 
 # Request timing middleware
 @app.before_request
@@ -40,7 +61,7 @@ def after_request(response):
             request.path,
             response.status_code,
             duration,
-            request.remote_addr,
+            get_client_ip(),
             request.headers.get('User-Agent', 'Unknown'),
             query_string,
             json_body,
@@ -51,7 +72,8 @@ def after_request(response):
 
 @app.route('/')
 def index():
-    logger.info("Serving index page to %s", request.remote_addr)
+    client_ip = get_client_ip()
+    logger.info("Serving index page to %s", client_ip)
     start_time = time.time()
     
     # Generate dates for the next 30 days
@@ -88,8 +110,9 @@ def get_destinations():
     if not stations:
         stations = ['PARIS (intramuros)']
     
+    client_ip = get_client_ip()
     logger.info("Processing destinations request from %s for date %s with stations: %s", 
-                request.remote_addr, selected_date, stations)
+                client_ip, selected_date, stations)
     
     start_time = time.time()
     try:
@@ -228,9 +251,10 @@ def get_trip_connections_endpoint():
     else:
         destinations = list(destination) if destination else []
 
+    client_ip = get_client_ip()
     logger.info(
         "Processing connections request from %s: %s -> %s (%s to %s)",
-        request.remote_addr,
+        client_ip,
         origins,
         destinations,
         start_date,

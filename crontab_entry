@@ -1,3 +1,0 @@
-# TGV Max Planner Database Update - runs every 12 hours
-# Update at 00:00 and 12:00 every day
-0 */12 * * * cd /root/better_max_planner && /usr/bin/python3 /root/better_max_planner/update_database.py >> /var/log/tgvmax_cron.log 2>&1 

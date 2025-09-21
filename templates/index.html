@@ -602,9 +602,55 @@
                     </div>
                 </div>
                 <!-- Route finder tab: multi-select origins and destinations -->
-                <div class="form-group">
-                    <label for="originSelect">Origine(s) :</label>
-                    <select id="originSelect" multiple>
+                <!-- Origin and Destination with Swap Button -->
+                <div style="display: flex; align-items: flex-end; gap: 15px;">
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label for="originSelect">Origine(s) :</label>
+                        <select id="originSelect" multiple>
+                            <!-- ILE DE FRANCE first (forced to top) -->
+                            <option value="ILE DE FRANCE (toutes gares)">ILE DE FRANCE (toutes gares)</option>
+                            <!-- PARIS (intramuros) second -->
+                            <option value="PARIS (intramuros)">PARIS (intramuros)</option>
+                            <!-- Other station groups (alphabetical order) -->
+                            {% for group in station_groups %}
+                            {% if group.group != "ILE DE FRANCE (toutes gares)" and group.group != "PARIS (intramuros)" %}
+                            <option value="{{ group.group }}">{{ group.group }}</option>
+                            {% endif %}
+                            {% endfor %}
+                            <!-- Individual stations (alphabetical order, excluding PARIS) -->
+                            {% for destination in destinations %}
+                            {% if destination != "PARIS (intramuros)" and destination != "ILE DE FRANCE (toutes gares)" %}
+                            <option value="{{ destination }}">{{ destination }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Swap Button -->
+                    <button type="button" id="swapButton" onclick="swapOriginDestination()" style="
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                        padding: 8px;
+                        border-radius: 50%;
+                        font-size: 16px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+                        width: 36px;
+                        height: 36px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 2px;
+                    " onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)'" 
+                       onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(102, 126, 234, 0.3)'">
+                        ⇄
+                    </button>
+                    
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label for="destinationSelect">Destination(s) :</label>
+                        <select id="destinationSelect" multiple>
                         <!-- ILE DE FRANCE first (forced to top) -->
                         <option value="ILE DE FRANCE (toutes gares)">ILE DE FRANCE (toutes gares)</option>
                         <!-- PARIS (intramuros) second -->
@@ -621,31 +667,13 @@
                         <option value="{{ destination }}">{{ destination }}</option>
                         {% endif %}
                         {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="destinationSelect">Destination(s) :</label>
-                    <select id="destinationSelect" multiple>
-                        <!-- ILE DE FRANCE first (forced to top) -->
-                        <option value="ILE DE FRANCE (toutes gares)">ILE DE FRANCE (toutes gares)</option>
-                        <!-- PARIS (intramuros) second -->
-                        <option value="PARIS (intramuros)">PARIS (intramuros)</option>
-                        <!-- Other station groups (alphabetical order) -->
-                        {% for group in station_groups %}
-                        {% if group.group != "ILE DE FRANCE (toutes gares)" and group.group != "PARIS (intramuros)" %}
-                        <option value="{{ group.group }}">{{ group.group }}</option>
-                        {% endif %}
-                        {% endfor %}
-                        <!-- Individual stations (alphabetical order, excluding PARIS) -->
-                        {% for destination in destinations %}
-                        {% if destination != "PARIS (intramuros)" and destination != "ILE DE FRANCE (toutes gares)" %}
-                        <option value="{{ destination }}">{{ destination }}</option>
-                        {% endif %}
-                        {% endfor %}
-                    </select>
+                        </select>
+                    </div>
                 </div>
 
-                <button class="btn" id="findConnectionsBtn" onclick="findConnections()">Trouver des itinéraires</button>
+                <div style="margin-top: 20px;">
+                    <button class="btn" id="findConnectionsBtn" onclick="findConnections()">Trouver des itinéraires</button>
+                </div>
             </div>
             <div class="results" id="connectionsResults">
                 <div class="loading" id="connectionsLoading" style="display: none;">
@@ -797,10 +825,10 @@
         function showTab(tabNum) {
             document.getElementById('tab1-content').style.display = tabNum === 1 ? 'block' : 'none';
             document.getElementById('tab2-content').style.display = tabNum === 2 ? 'block' : 'none';
-            document.getElementById('tab1-btn').style.background = tabNum === 1 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'none';
-            document.getElementById('tab1-btn').style.color = tabNum === 1 ? 'white' : '#333';
-            document.getElementById('tab2-btn').style.background = tabNum === 2 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'none';
-            document.getElementById('tab2-btn').style.color = tabNum === 2 ? 'white' : '#333';
+            document.getElementById('tab1-btn').style.background = tabNum === 2 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'none';
+            document.getElementById('tab1-btn').style.color = tabNum === 2 ? 'white' : '#333';
+            document.getElementById('tab2-btn').style.background = tabNum === 1 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'none';
+            document.getElementById('tab2-btn').style.color = tabNum === 1 ? 'white' : '#333';
         }
         // Default to tab 1
         showTab(1);
@@ -879,11 +907,37 @@
             });
             }
         }
-        // Setup dropdowns for tab 2 (multi-select)
-        setupSearchableDropdown('originSearch', 'originOptions', 'originSelect', true);
-        setupSearchableDropdown('destinationSearch', 'destinationOptions', 'destinationSelect', true);
+        // Note: Multi-select dropdowns are handled by Choices.js library in the DOMContentLoaded event
 
-
+        // Swap Origin and Destination function
+        function swapOriginDestination() {
+            // Get the Choices.js instances for origin and destination selects
+            const originSelect = document.getElementById('originSelect');
+            const destinationSelect = document.getElementById('destinationSelect');
+            
+            // Get the current selected values
+            const originValues = Array.from(originSelect.selectedOptions).map(opt => opt.value);
+            const destinationValues = Array.from(destinationSelect.selectedOptions).map(opt => opt.value);
+            
+            // Clear current selections
+            Array.from(originSelect.options).forEach(option => option.selected = false);
+            Array.from(destinationSelect.options).forEach(option => option.selected = false);
+            
+            // Swap the selections
+            destinationValues.forEach(value => {
+                const option = Array.from(originSelect.options).find(opt => opt.value === value);
+                if (option) option.selected = true;
+            });
+            
+            originValues.forEach(value => {
+                const option = Array.from(destinationSelect.options).find(opt => opt.value === value);
+                if (option) option.selected = true;
+            });
+            
+            // Trigger change events to update Choices.js displays
+            originSelect.dispatchEvent(new Event('change'));
+            destinationSelect.dispatchEvent(new Event('change'));
+        }
 
         // Find Connections logic
         async function findConnections() {

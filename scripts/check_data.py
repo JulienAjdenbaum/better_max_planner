@@ -2,10 +2,10 @@
 import sys
 import os
 
-# Add the current directory to the Python path so we can import utils
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Add the parent directory to the Python path so we can import src modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils import run_query, expand_station_groups
+from src.utils import run_query, expand_station_groups
 
 def check_data():
     dates = ["2025-08-07", "2025-08-08", "2025-08-09"]

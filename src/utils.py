@@ -11,7 +11,7 @@ import time
 # pd.set_option('display.max_columns', 500)
 # from app import destination
 
-engine = create_engine('sqlite:///tgvmax.db')
+engine = create_engine('sqlite:///data/tgvmax.db')
 logger = logging.getLogger(__name__)
 
 def format_duration(td):
@@ -323,7 +323,7 @@ def get_trip_connections(dates, origins, destinations, max_connections=0, allow_
         # ✂️  MUCH simpler query, no recursion at all
         query = f"""
             SELECT origine, destination, heure_depart AS first_leg_departure,
-                   heure_arrivee AS last_leg_arrival, uid
+                   heure_arrivee AS last_leg_arrival, uid, date
             FROM   TGVMAX
             WHERE  {origin_condition}
               AND  {destination_condition}
@@ -503,7 +503,7 @@ def get_trip_connections(dates, origins, destinations, max_connections=0, allow_
             query = """
             SELECT origine, heure_depart, destination, heure_arrivee, train_no
             FROM TGVMAX
-            WHERE uid=:uid
+            WHERE "UID"=:uid
             """
             params = {"uid": train}
             train_info = list(run_query(query, params=params).values[0])
@@ -592,9 +592,9 @@ def _post_process_direct_trips(result):
         query = """
         SELECT origine, heure_depart, destination, heure_arrivee, train_no
         FROM TGVMAX
-        WHERE uid=:uid
+        WHERE "UID"=:uid
         """
-        params = {"uid": route['uid']}
+        params = {"uid": route['UID']}
         train_info = list(run_query(query, params=params).values[0])
         train_dic['train_list'].append(train_info)
         
@@ -627,7 +627,7 @@ def _post_process_direct_trips(result):
             query = """
             SELECT origine, heure_depart, destination, heure_arrivee, train_no
             FROM TGVMAX
-            WHERE uid=:uid
+            WHERE "UID"=:uid
             """
             params = {"uid": train}
             train_info = list(run_query(query, params=params).values[0])
@@ -712,7 +712,7 @@ import os
 # Load station groups from JSON file
 def load_station_groups():
     """Load station groups from the JSON file."""
-    json_path = os.path.join(os.path.dirname(__file__), 'station_groups.json')
+    json_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'station_groups.json')
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
             return json.load(f)

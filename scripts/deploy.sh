@@ -19,14 +19,14 @@ if [ $? -eq 0 ]; then
     # Exécuter le conteneur
     docker run -d \
         --name tgvmax-planner \
-        -p 5000:5000 \
-        -v $(pwd)/tgvmax.db:/app/tgvmax.db \
+        -p 5163:5163 \
+        -v $(pwd)/data/tgvmax.db:/app/data/tgvmax.db \
         --restart unless-stopped \
         tgvmax-planner
     
     if [ $? -eq 0 ]; then
         echo "✅ Le Planificateur TGV Max fonctionne maintenant !"
-        echo "🌐 Accédez à l'application à : http://localhost:5000"
+        echo "🌐 Accédez à l'application à : http://localhost:5163"
         echo ""
         echo "📊 Statut du conteneur :"
         docker ps --filter name=tgvmax-planner

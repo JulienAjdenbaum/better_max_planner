@@ -3,18 +3,18 @@ services:
     build: .
     container_name: tgvmax-planner
     ports:
-      - "5000:5000"
+      - "5163:5163"
     environment:
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
     volumes:
       # Mount database for persistence
-      - ./tgvmax.db:/app/tgvmax.db
+      - ./data/tgvmax.db:/app/data/tgvmax.db
       # Mount logs directory for external access
       - ./logs:/var/log
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:5163/"]
       interval: 30s
       timeout: 10s
       retries: 3
