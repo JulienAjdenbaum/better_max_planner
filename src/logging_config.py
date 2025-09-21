@@ -2,7 +2,10 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 
-DEFAULT_LOG_FILE = '/var/log/tgvmax_app.log'
+# Use project's logs directory instead of /var/log
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOGS_DIR = os.path.join(PROJECT_ROOT, 'logs')
+DEFAULT_LOG_FILE = os.path.join(LOGS_DIR, 'tgvmax_app.log')
 
 def setup_logging(log_file: str = DEFAULT_LOG_FILE) -> None:
     """Configure root logger with console and rotating file handlers."""
@@ -40,7 +43,7 @@ def setup_logging(log_file: str = DEFAULT_LOG_FILE) -> None:
     request_logger.setLevel(logging.INFO)
     
     # Create a separate log file for request timing
-    request_log_file = '/var/log/tgvmax_requests.log'
+    request_log_file = os.path.join(LOGS_DIR, 'tgvmax_requests.log')
     request_file_handler = RotatingFileHandler(request_log_file, maxBytes=1_000_000, backupCount=5)
     request_file_handler.setFormatter(detailed_formatter)
     request_logger.addHandler(request_file_handler)

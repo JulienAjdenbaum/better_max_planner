@@ -52,7 +52,8 @@ def main():
         "tests/test_api.py",
         "tests/test_connection.py",
         "tests/test_trip_connection.py",
-        "tests/test_trip.py"
+        "tests/test_trip.py",
+        "tests/test_day_trips.py"
     ]
     
     # Track results

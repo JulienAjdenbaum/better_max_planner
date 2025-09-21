@@ -11,7 +11,7 @@ services:
       # Mount database for persistence
       - ./data/tgvmax.db:/app/data/tgvmax.db
       # Mount logs directory for external access
-      - ./logs:/var/log
+      - ./logs:/app/logs
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5163/"]

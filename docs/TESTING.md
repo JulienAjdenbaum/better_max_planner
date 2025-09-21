@@ -10,6 +10,7 @@ The test suite is organized as follows:
 tests/
 ├── test_api.py              # API endpoint testing
 ├── test_connection.py       # Database connection and query testing
+├── test_day_trips.py        # Day trips functionality testing
 ├── test_duration_fix.py     # Duration calculation testing
 ├── test_travel_time.py      # Travel time calculation testing
 ├── test_trip_connection.py  # Trip connection search testing
@@ -46,6 +47,9 @@ python tests/test_trip_connection.py
 
 # Test duration calculations
 python tests/test_duration_fix.py
+
+# Test day trips functionality
+python tests/test_day_trips.py
 
 # Test database connections
 python tests/test_connection.py
@@ -104,6 +108,12 @@ ls data/tgvmax.db
 - Tests database connectivity and queries
 - Validates station data availability
 - Tests connection search functionality with real database data
+
+### `test_day_trips.py`
+- Tests the main day trips functionality (`find_optimal_destinations`)
+- Uses today's date and PARIS (intramuros) as origin
+- Validates day trip destination finding and optimization
+- Tests multiple Paris area stations for comparison
 
 ### `test_trip_connection.py`
 - Tests the main trip connection search function

@@ -107,15 +107,24 @@ The application implements a comprehensive logging system that captures detailed
 
 ### Log Files
 
-The application creates two separate log files:
+The application creates multiple log files in the `logs/` directory:
 
-1. **Main Application Log**: `/var/log/tgvmax_app.log`
+1. **Main Application Log**: `logs/tgvmax_app.log`
    - Contains application-level logs, processing details, and errors
    - Includes endpoint-specific timing and processing information
 
-2. **Request Timing Log**: `/var/log/tgvmax_requests.log`
+2. **Request Timing Log**: `logs/tgvmax_requests.log`
    - Dedicated file for request/response timing data
    - Contains complete request and response information for every HTTP request
+
+3. **Database Update Log**: `logs/tgvmax_update.log`
+   - Logs from the database update scripts
+
+4. **Cron Job Log**: `logs/tgvmax_cron.log`
+   - Output from scheduled cron jobs
+
+5. **Cleanup Log**: `logs/tgvmax_cleanup.log`
+   - Logs from database cleanup operations
 
 ### Logging Configuration
 
@@ -193,16 +202,25 @@ To analyze the logs:
 
 ```bash
 # View recent requests
-tail -f /var/log/tgvmax_requests.log
+tail -f logs/tgvmax_requests.log
 
 # Find slow requests (>1 second)
-grep "Duration: [1-9]\." /var/log/tgvmax_requests.log
+grep "Duration: [1-9]\." logs/tgvmax_requests.log
 
 # Count requests by endpoint
-grep "Request:" /var/log/tgvmax_requests.log | awk '{print $8}' | sort | uniq -c
+grep "Request:" logs/tgvmax_requests.log | awk '{print $8}' | sort | uniq -c
 
 # Find errors
-grep "Status: [4-5]" /var/log/tgvmax_requests.log
+grep "Status: [4-5]" logs/tgvmax_requests.log
+
+# Monitor all application logs
+tail -f logs/tgvmax_app.log
+
+# Check database update logs
+tail -f logs/tgvmax_update.log
+
+# Monitor cron job output
+tail -f logs/tgvmax_cron.log
 ```
 
 ### Privacy Considerations

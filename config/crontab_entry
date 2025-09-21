@@ -1,5 +1,9 @@
-# TGV Max Planner Database Update - runs every 12 hours and daily at 6:05 AM
-# Update at 00:00 and 12:00 every day
-0 */12 * * * cd /root/better_max_planner && /usr/bin/python3 /root/better_max_planner/update_database.py >> /var/log/tgvmax_cron.log 2>&1 
+# TGV Max Planner Database Update with Optimization - runs every 12 hours and daily at 6:05 AM
+# Complete update (download + optimize) at 00:00 and 12:00 every day
+0 */12 * * * cd /root/better_max_planner && /usr/bin/python3 /root/better_max_planner/scripts/update_database.py >> /root/better_max_planner/logs/tgvmax_update.log 2>&1 
 # Additional daily update at 6:05 AM
-5 6 * * * cd /root/better_max_planner && /usr/bin/python3 /root/better_max_planner/update_database.py >> /var/log/tgvmax_cron.log 2>&1 
+5 6 * * * cd /root/better_max_planner && /usr/bin/python3 /root/better_max_planner/scripts/update_database.py >> /root/better_max_planner/logs/tgvmax_update.log 2>&1
+# TGV Max Planner Past Trips Cleanup - runs every 3 minutes
+*/3 * * * * cd /root/better_max_planner && /usr/bin/python3 /root/better_max_planner/scripts/cleanup_past_trips.py >> /root/better_max_planner/logs/tgvmax_cleanup.log 2>&1
+# Optional: Standalone database optimization (uncomment if needed separately)
+# 30 2 * * * cd /root/better_max_planner && /usr/bin/python3 /root/better_max_planner/scripts/optimize_database.py >> /root/better_max_planner/logs/tgvmax_optimization.log 2>&1 

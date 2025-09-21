@@ -911,32 +911,27 @@
 
         // Swap Origin and Destination function
         function swapOriginDestination() {
-            // Get the Choices.js instances for origin and destination selects
-            const originSelect = document.getElementById('originSelect');
-            const destinationSelect = document.getElementById('destinationSelect');
+            // Check if Choices.js instances are available
+            if (!window.originChoices || !window.destinationChoices) {
+                console.error('Choices.js instances not found');
+                return;
+            }
             
-            // Get the current selected values
-            const originValues = Array.from(originSelect.selectedOptions).map(opt => opt.value);
-            const destinationValues = Array.from(destinationSelect.selectedOptions).map(opt => opt.value);
+            // Get the current selected values using Choices.js API
+            const originValues = window.originChoices.getValue(true);
+            const destinationValues = window.destinationChoices.getValue(true);
             
-            // Clear current selections
-            Array.from(originSelect.options).forEach(option => option.selected = false);
-            Array.from(destinationSelect.options).forEach(option => option.selected = false);
+            // Clear current selections using Choices.js API
+            window.originChoices.removeActiveItems();
+            window.destinationChoices.removeActiveItems();
             
-            // Swap the selections
-            destinationValues.forEach(value => {
-                const option = Array.from(originSelect.options).find(opt => opt.value === value);
-                if (option) option.selected = true;
-            });
-            
-            originValues.forEach(value => {
-                const option = Array.from(destinationSelect.options).find(opt => opt.value === value);
-                if (option) option.selected = true;
-            });
-            
-            // Trigger change events to update Choices.js displays
-            originSelect.dispatchEvent(new Event('change'));
-            destinationSelect.dispatchEvent(new Event('change'));
+            // Set the swapped selections using Choices.js API
+            if (destinationValues.length > 0) {
+                window.originChoices.setChoiceByValue(destinationValues);
+            }
+            if (originValues.length > 0) {
+                window.destinationChoices.setChoiceByValue(originValues);
+            }
         }
 
         // Find Connections logic
@@ -944,10 +939,9 @@
             const dateRange = document.getElementById('dateRangeInput').value.split(' to ');
             const start_date = dateRange[0] || '';
             const end_date = dateRange[1] || dateRange[0] || '';
-            const originSelect = document.getElementById('originSelect');
-            const destinationSelect = document.getElementById('destinationSelect');
-            const origins = Array.from(originSelect.selectedOptions).map(opt => opt.value);
-            const destinations = Array.from(destinationSelect.selectedOptions).map(opt => opt.value);
+            // Get selected values using Choices.js API for consistency
+            const origins = window.originChoices ? window.originChoices.getValue(true) : [];
+            const destinations = window.destinationChoices ? window.destinationChoices.getValue(true) : [];
             
             // Default max connections to 0
             const maxConnections = 0;
@@ -991,7 +985,7 @@
                 container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">Aucune connexion trouvée pour les critères sélectionnés.</p>';
                 return;
             }
-            let html = `<h2 style="margin-bottom: 20px; color: #333;">Trouvé ${data.length} itinéraire(s)</h2><div class="trips-table-wrapper"><table class="trips-table"><thead><tr><th>Date</th><th>Itinéraire</th><th>Durée</th><th>Trains</th></tr></thead><tbody>`;
+            let html = `<h2 style="margin-bottom: 20px; color: #333;">${data.length === 1 ? '1 itinéraire trouvé' : `${data.length} itinéraires trouvés`}</h2><div class="trips-table-wrapper"><table class="trips-table"><thead><tr><th>Date</th><th>Itinéraire</th><th>Durée</th><th>Trains</th></tr></thead><tbody>`;
             data.forEach(conn => {
                 html += `<tr><td>${conn.date || ''}</td><td>${conn.route_name}</td><td>${formatDuration(conn.duration)}</td><td><ul style='padding-left: 18px;'>`;
                 conn.train_list.forEach(train => {
@@ -1069,9 +1063,9 @@
                 maxDate: "{{ dates[-1].value }}",
                 defaultDate: "{{ dates[0].value }}"
             });
-            // Initialize Choices.js for multi-selects
-            new Choices('#originSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Sélectionner les origines...', shouldSort: false });
-            new Choices('#destinationSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Sélectionner les destinations...', shouldSort: false });
+            // Initialize Choices.js for multi-selects and store instances globally
+            window.originChoices = new Choices('#originSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Sélectionner les origines...', shouldSort: false });
+            window.destinationChoices = new Choices('#destinationSelect', { removeItemButton: true, placeholder: true, placeholderValue: 'Sélectionner les destinations...', shouldSort: false });
             
             // Initialize day trip station select with PARIS as default
             const dayTripChoices = new Choices('#dayTripStationSelect', { 

@@ -21,9 +21,8 @@ COPY . .
 
 # Create a non-root user for security and set up log directory permissions
 RUN useradd -m -u 1000 appuser && \
-    mkdir -p /var/log && \
-    chown -R appuser:appuser /app && \
-    chown -R appuser:appuser /var/log
+    mkdir -p /app/logs && \
+    chown -R appuser:appuser /app
 USER appuser
 
 # Expose port
